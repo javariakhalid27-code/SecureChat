@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — About</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020c10;--surface:#051218;--border:#0a2d3d;--accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;--text:#c8e8f0;--muted:#2a5060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.018) 1px,transparent 1px);background-size:45px 45px;pointer-events:none;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,212,255,0.1);background:rgba(2,12,16,0.95);backdrop-filter:blur(10px);}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-decoration:none;transition:color 0.2s;}
+.nav-link:hover,.nav-link.active{color:var(--accent);}
+.nav-cta{padding:7px 18px;border:1px solid var(--accent);color:var(--accent);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all 0.2s;}
+.nav-cta:hover{background:var(--accent);color:#000;}
+
+/* HERO */
+.page-hero{padding:140px 60px 80px;text-align:center;position:relative;z-index:1;}
+.page-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:16px;animation:fadeUp 0.5s ease both;}
+.page-title{font-family:'Orbitron',sans-serif;font-size:56px;font-weight:900;color:var(--text);letter-spacing:2px;line-height:1.1;margin-bottom:20px;animation:fadeUp 0.5s ease 0.1s both;}
+.page-title span{color:var(--accent);}
+.page-sub{font-size:18px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.8;font-weight:300;animation:fadeUp 0.5s ease 0.2s both;}
+
+/* SECTIONS */
+.section{padding:80px 60px;position:relative;z-index:1;}
+.section-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:12px;}
+.section-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:700;color:var(--text);margin-bottom:20px;}
+.section-title span{color:var(--accent);}
+.section-text{font-size:15px;color:var(--muted);line-height:1.9;font-weight:300;max-width:700px;}
+
+/* ABOUT GRID */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:1100px;margin:0 auto;align-items:center;}
+.about-visual{position:relative;}
+.about-box{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:32px;position:relative;overflow:hidden;}
+.about-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.about-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;}
+.astat{background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:3px;padding:16px;text-align:center;}
+.astat-n{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--accent);}
+.astat-l{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:4px;}
+
+/* TEAM/PROJECT */
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:40px auto 0;}
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:28px;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;}
+.team-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent2),transparent);opacity:0;transition:opacity 0.3s;}
+.team-card:hover::before{opacity:1;}
+.team-card:hover{transform:translateY(-4px);border-color:rgba(0,212,255,0.2);}
+.team-avatar{width:70px;height:70px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:#fff;margin:0 auto 16px;}
+.team-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
+.team-role{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;}
+.team-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* TECH STACK */
+.tech-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;margin:40px auto 0;}
+.tech-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:20px;text-align:center;transition:all 0.2s;}
+.tech-card:hover{border-color:rgba(0,212,255,0.3);transform:scale(1.02);}
+.tech-icon{font-size:32px;margin-bottom:12px;display:block;}
+.tech-name{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:4px;}
+.tech-desc{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;}
+
+/* TIMELINE */
+.timeline{max-width:700px;margin:40px auto 0;position:relative;}
+.timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--accent),var(--accent2),transparent);}
+.tl-item{display:flex;gap:24px;margin-bottom:32px;padding-left:8px;}
+.tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;}
+.tl-content{flex:1;}
+.tl-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:4px;}
+.tl-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* FOOTER */
+footer{padding:40px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+.footer-brand{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:3px;}
+.footer-links{display:flex;gap:24px;}
+.footer-link{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:2px;transition:color 0.2s;}
+.footer-link:hover{color:var(--accent);}
+
+.reveal{opacity:0;transform:translateY(20px);transition:all 0.6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/landing" class="nav-logo">🔐 SECURECHAT</a>
+  <div class="nav-links">
+    <a href="/landing" class="nav-link">HOME</a>
+    <a href="/features" class="nav-link">FEATURES</a>
+    <a href="/how-it-works" class="nav-link">HOW IT WORKS</a>
+    <a href="/about" class="nav-link active">ABOUT</a>
+    <a href="/login" class="nav-cta">LAUNCH APP →</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="page-tag">// ABOUT SECURECHAT</span>
+  <h1 class="page-title">Built for <span>Privacy</span><br>By Design</h1>
+  <p class="page-sub">SecureChat is a military-grade encrypted messaging platform built as an Information Security project demonstrating real-world cryptographic protocols.</p>
+</div>
+
+<section class="section">
+  <div class="about-grid">
+    <div>
+      <span class="section-tag">// THE PROJECT</span>
+      <h2 class="section-title">What is <span>SecureChat?</span></h2>
+      <p class="section-text">SecureChat is a fully functional end-to-end encrypted chat application built to demonstrate Information Security concepts in a real-world setting. Every message is encrypted using AES-256 before transmission, and RSA-2048 keys ensure only the intended recipient can decrypt the message.</p>
+      <br/>
+      <p class="section-text">The server operates on a zero-knowledge principle — it stores only ciphertext and never has access to plaintext messages. This makes SecureChat a true end-to-end encrypted system.</p>
+      <div class="about-stats">
+        <div class="astat"><div class="astat-n">256</div><div class="astat-l">AES KEY BITS</div></div>
+        <div class="astat"><div class="astat-n">2048</div><div class="astat-l">RSA KEY BITS</div></div>
+        <div class="astat"><div class="astat-n">0</div><div class="astat-l">PLAINTEXT STORED</div></div>
+        <div class="astat"><div class="astat-n">100%</div><div class="astat-l">ENCRYPTED</div></div>
+      </div>
+    </div>
+    <div class="about-visual reveal">
+      <div class="about-box">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:16px;">PROJECT OVERVIEW</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">SUBJECT</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);">INFORMATION SECURITY</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">TYPE</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);">WEB APPLICATION</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">ENCRYPTION</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);">AES-256 + RSA-2048</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">BACKEND</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);">PYTHON FLASK</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">REAL-TIME</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);">SOCKET.IO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">DATABASE</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);">SQLITE</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px;background:rgba(0,255,157,0.04);border:1px solid rgba(0,255,157,0.2);border-radius:2px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">STATUS</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);">● FULLY OPERATIONAL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:rgba(5,18,24,0.5);">
+  <div style="text-align:center;margin-bottom:40px;" class="reveal">
+    <span class="section-tag">// TECH STACK</span>
+    <h2 class="section-title">Technologies <span>Used</span></h2>
+  </div>
+  <div class="tech-grid">
+    <div class="tech-card reveal"><span class="tech-icon">🐍</span><div class="tech-name">PYTHON</div><div class="tech-desc">Backend language</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🌶️</span><div class="tech-name">FLASK</div><div class="tech-desc">Web framework</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">⚡</span><div class="tech-name">SOCKET.IO</div><div class="tech-desc">Real-time messaging</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🗄️</span><div class="tech-name">SQLITE</div><div class="tech-desc">Database storage</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🔐</span><div class="tech-name">AES-256</div><div class="tech-desc">Message encryption</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🔑</span><div class="tech-name">RSA-2048</div><div class="tech-desc">Key exchange</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🛡️</span><div class="tech-name">BCRYPT</div><div class="tech-desc">Password hashing</div></div>
+    <div class="tech-card reveal"><span class="tech-icon">🌐</span><div class="tech-name">HTML/CSS/JS</div><div class="tech-desc">Frontend</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div style="text-align:center;margin-bottom:40px;" class="reveal">
+    <span class="section-tag">// DEVELOPMENT TIMELINE</span>
+    <h2 class="section-title">Project <span>Journey</span></h2>
+  </div>
+  <div class="timeline">
+    <div class="tl-item reveal"><div class="tl-dot">🎯</div><div class="tl-content"><div class="tl-title">PROJECT PLANNING</div><div class="tl-desc">Selected End-to-End Encryption as the core IS topic. Designed system architecture and chose AES-256 + RSA-2048 as the cryptographic foundation.</div></div></div>
+    <div class="tl-item reveal"><div class="tl-dot">🔐</div><div class="tl-content"><div class="tl-title">ENCRYPTION ENGINE</div><div class="tl-desc">Implemented AES-256-CFB for message encryption and RSA-2048-OAEP for secure key exchange. Built the cryptographic core in Python.</div></div></div>
+    <div class="tl-item reveal"><div class="tl-dot">🌐</div><div class="tl-content"><div class="tl-title">WEB APPLICATION</div><div class="tl-desc">Built Flask backend with SQLite database. Implemented user authentication with bcrypt password hashing and session management.</div></div></div>
+    <div class="tl-item reveal"><div class="tl-dot">⚡</div><div class="tl-content"><div class="tl-title">REAL-TIME FEATURES</div><div class="tl-desc">Integrated Socket.IO for real-time messaging. Added online/offline status, typing indicators, and instant notifications.</div></div></div>
+    <div class="tl-item reveal"><div class="tl-dot">🎨</div><div class="tl-content"><div class="tl-title">UI/UX DESIGN</div><div class="tl-desc">Designed cybersecurity-themed dark interface with animated elements, professional dashboard, and multi-page website structure.</div></div></div>
+    <div class="tl-item reveal"><div class="tl-dot">✅</div><div class="tl-content"><div class="tl-title">COMPLETED</div><div class="tl-desc">Full-stack encrypted chat application with landing page, login, chat interface, security dashboard, and comprehensive documentation.</div></div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">🔐 SECURECHAT</div>
+  <div class="footer-links">
+    <a href="/landing" class="footer-link">HOME</a>
+    <a href="/features" class="footer-link">FEATURES</a>
+    <a href="/how-it-works" class="footer-link">HOW IT WORKS</a>
+    <a href="/dashboard" class="footer-link">DASHBOARD</a>
+    <a href="/login" class="footer-link">LOGIN</a>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">AES-256 + RSA-2048 ENCRYPTED</div>
+</footer>
+
+<script>
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — Security Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#020c10;--surface:#051218;--surface2:#071a24;--surface3:#0a2030;
+  --border:#0a2d3d;--accent:#00d4ff;--accent2:#00ff9d;
+  --danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;
+  --text:#c8e8f0;--muted:#2a5060;
+  --glow:0 0 20px rgba(0,212,255,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.018) 1px,transparent 1px);background-size:45px 45px;pointer-events:none;z-index:0;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+@keyframes scanLine{0%{top:0;opacity:0.5}100%{top:100%;opacity:0}}
+@keyframes countUp{from{opacity:0}to{opacity:1}}
+@keyframes flow{0%{stroke-dashoffset:100}100%{stroke-dashoffset:0}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;padding:14px 32px;background:rgba(2,12,16,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(10px);display:flex;align-items:center;gap:16px;}
+.nav-back{padding:6px 14px;border:1px solid var(--border);border-radius:2px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;text-decoration:none;transition:all 0.2s;cursor:pointer;}
+.nav-back:hover{border-color:var(--accent);color:var(--accent);}
+.nav-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:4px;}
+.nav-live{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:2px;}
+.nav-live-dot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:blink 1.2s infinite;}
+.nav-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
+
+/* MAIN GRID */
+.dash-wrap{position:relative;z-index:1;padding:24px 32px;display:grid;grid-template-columns:repeat(12,1fr);gap:16px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;position:relative;animation:fadeIn 0.5s ease both;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.card.blue::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.card.green::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.card.purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.card.warning::before{background:linear-gradient(90deg,transparent,var(--warning),transparent);}
+.card.danger::before{background:linear-gradient(90deg,transparent,var(--danger),transparent);}
+.card-inner{padding:20px;}
+.card-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.card-badge{padding:2px 8px;border-radius:2px;font-size:8px;letter-spacing:1px;}
+.badge-active{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);color:var(--accent2);}
+.badge-warn{background:rgba(255,183,0,0.1);border:1px solid rgba(255,183,0,0.2);color:var(--warning);}
+.badge-danger{background:rgba(255,60,90,0.1);border:1px solid rgba(255,60,90,0.2);color:var(--danger);}
+
+/* STAT CARDS */
+.stat-big{font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;line-height:1;margin-bottom:4px;}
+.stat-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;}
+.stat-change{font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:8px;display:flex;align-items:center;gap:4px;}
+.stat-change.up{color:var(--accent2);}
+.stat-change.down{color:var(--danger);}
+
+/* GRID SPANS */
+.col-3{grid-column:span 3;}
+.col-4{grid-column:span 4;}
+.col-6{grid-column:span 6;}
+.col-8{grid-column:span 8;}
+.col-12{grid-column:span 12;}
+
+/* CHART */
+.chart-wrap{position:relative;height:180px;margin-top:8px;}
+canvas{width:100%!important;}
+
+/* ENCRYPTION VISUALIZER */
+.enc-viz{padding:20px;}
+.enc-flow-wrap{display:flex;align-items:center;gap:0;overflow-x:auto;padding:16px 0;}
+.enc-node{flex-shrink:0;text-align:center;}
+.enc-node-box{padding:12px 16px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;position:relative;overflow:hidden;}
+.enc-node-box::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);animation:shimmer 2s infinite;}
+@keyframes shimmer{0%{left:-100%}100%{left:100%}}
+.enc-node-label{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:2px;margin-top:6px;}
+.enc-node-val{font-size:8px;word-break:break-all;max-width:100px;margin-top:4px;opacity:0.7;}
+.enc-arrow-wrap{flex-shrink:0;padding:0 8px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.enc-arrow-line{width:40px;height:2px;position:relative;overflow:hidden;}
+.enc-arrow-line::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;animation:flowLine 1.5s linear infinite;}
+.enc-arrow-label{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;}
+
+/* THREAT MONITOR */
+.threat-list{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.threat-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;animation:fadeIn 0.3s ease;transition:all 0.2s;}
+.threat-item:hover{border-color:rgba(255,60,90,0.3);}
+.threat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.threat-dot.critical{background:var(--danger);box-shadow:0 0 8px var(--danger);animation:blink 1s infinite;}
+.threat-dot.warning{background:var(--warning);box-shadow:0 0 8px var(--warning);}
+.threat-dot.info{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.threat-dot.safe{background:var(--accent2);}
+.threat-info{flex:1;}
+.threat-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);letter-spacing:1px;}
+.threat-desc{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px;}
+.threat-time{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);flex-shrink:0;}
+.threat-badge{padding:2px 8px;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;flex-shrink:0;}
+
+/* ACTIVITY LOG */
+.log-list{display:flex;flex-direction:column;gap:0;max-height:320px;overflow-y:auto;}
+.log-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(10,45,61,0.5);animation:fadeIn 0.3s ease;}
+.log-item:last-child{border-bottom:none;}
+.log-icon{width:28px;height:28px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.log-icon.enc{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);}
+.log-icon.key{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);}
+.log-icon.msg{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);}
+.log-icon.login{background:rgba(255,183,0,0.1);border:1px solid rgba(255,183,0,0.2);}
+.log-icon.warn{background:rgba(255,60,90,0.1);border:1px solid rgba(255,60,90,0.2);}
+.log-text{flex:1;}
+.log-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);letter-spacing:1px;}
+.log-detail{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px;line-height:1.5;}
+.log-time{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);flex-shrink:0;}
+
+/* NETWORK MAP */
+.network-wrap{position:relative;height:280px;margin-top:8px;}
+#networkCanvas{width:100%;height:100%;}
+
+/* ALGORITHM TABLE */
+.algo-table{width:100%;border-collapse:collapse;margin-top:8px;}
+.algo-table th{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.algo-table td{font-family:'Share Tech Mono',monospace;font-size:9px;padding:10px 12px;border-bottom:1px solid rgba(10,45,61,0.5);}
+.algo-table tr:last-child td{border-bottom:none;}
+.algo-table tr:hover td{background:rgba(0,212,255,0.02);}
+.strength-bar-wrap{display:flex;align-items:center;gap:8px;}
+.strength-bar-bg{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.strength-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+.status-pill{padding:2px 8px;border-radius:2px;font-size:7px;letter-spacing:1px;}
+
+/* RADIAL GAUGE */
+.gauge-wrap{display:flex;justify-content:center;padding:10px 0;}
+.gauge-svg{overflow:visible;}
+
+/* KEY METRICS ROW */
+.metric-row{display:flex;gap:12px;margin-top:12px;}
+.metric-item{flex:1;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;text-align:center;}
+.metric-n{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;}
+.metric-l{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:3px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/chat" class="nav-back">← BACK TO CHAT</a>
+  <div class="nav-title">SECURITY DASHBOARD</div>
+  <div class="nav-live"><div class="nav-live-dot"></div>LIVE MONITORING</div>
+  <div class="nav-time" id="navTime">--:--:--</div>
+</nav>
+
+<div class="dash-wrap">
+
+  <!-- STAT CARDS -->
+  <div class="card blue col-3" style="animation-delay:0.05s">
+    <div class="card-inner">
+      <div class="card-label">MESSAGES ENCRYPTED<span class="card-badge badge-active">LIVE</span></div>
+      <div class="stat-big" style="color:var(--accent)" id="statMsgs">0</div>
+      <div class="stat-sub">TOTAL ENCRYPTED MESSAGES</div>
+      <div class="stat-change up">↑ AES-256-CFB SECURED</div>
+    </div>
+  </div>
+
+  <div class="card green col-3" style="animation-delay:0.1s">
+    <div class="card-inner">
+      <div class="card-label">ACTIVE USERS<span class="card-badge badge-active">ONLINE</span></div>
+      <div class="stat-big" style="color:var(--accent2)" id="statUsers">0</div>
+      <div class="stat-sub">REGISTERED ACCOUNTS</div>
+      <div class="stat-change up">↑ RSA KEYS GENERATED</div>
+    </div>
+  </div>
+
+  <div class="card purple col-3" style="animation-delay:0.15s">
+    <div class="card-inner">
+      <div class="card-label">RSA KEY SIZE<span class="card-badge badge-active">SECURE</span></div>
+      <div class="stat-big" style="color:var(--purple)">2048</div>
+      <div class="stat-sub">BITS — OAEP PADDING</div>
+      <div class="stat-change up">↑ UNBREAKABLE</div>
+    </div>
+  </div>
+
+  <div class="card warning col-3" style="animation-delay:0.2s">
+    <div class="card-inner">
+      <div class="card-label">AES KEY SIZE<span class="card-badge badge-active">ACTIVE</span></div>
+      <div class="stat-big" style="color:var(--warning)">256</div>
+      <div class="stat-sub">BITS — CFB MODE</div>
+      <div class="stat-change up">↑ MILITARY GRADE</div>
+    </div>
+  </div>
+
+  <!-- MESSAGE CHART -->
+  <div class="card blue col-8" style="animation-delay:0.25s">
+    <div class="card-inner">
+      <div class="card-label">ENCRYPTED MESSAGE ACTIVITY — LAST 12 HOURS<span class="card-badge badge-active">LIVE</span></div>
+      <div class="chart-wrap">
+        <canvas id="msgChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECURITY SCORE -->
+  <div class="card green col-4" style="animation-delay:0.3s">
+    <div class="card-inner">
+      <div class="card-label">SECURITY SCORE<span class="card-badge badge-active">A+</span></div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="160" height="100" viewBox="0 0 160 100">
+          <path d="M 20 90 A 60 60 0 0 1 140 90" fill="none" stroke="#0a2d3d" stroke-width="12" stroke-linecap="round"/>
+          <path d="M 20 90 A 60 60 0 0 1 140 90" fill="none" stroke="#00ff9d" stroke-width="12" stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="20" id="gaugeFill" style="transition:stroke-dashoffset 2s ease;"/>
+          <text x="80" y="82" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="28" font-weight="900" fill="#00ff9d" id="gaugeVal">98</text>
+          <text x="80" y="96" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#2a5060">SECURITY RATING</text>
+        </svg>
+      </div>
+      <div class="metric-row">
+        <div class="metric-item"><div class="metric-n" style="color:var(--accent2)">A+</div><div class="metric-l">ENCRYPTION</div></div>
+        <div class="metric-item"><div class="metric-n" style="color:var(--accent)">256</div><div class="metric-l">AES BITS</div></div>
+        <div class="metric-item"><div class="metric-n" style="color:var(--purple)">2048</div><div class="metric-l">RSA BITS</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENCRYPTION VISUALIZER -->
+  <div class="card blue col-12" style="animation-delay:0.35s">
+    <div class="card-inner">
+      <div class="card-label">LIVE ENCRYPTION FLOW VISUALIZER<span class="card-badge badge-active">ANIMATED</span></div>
+      <div class="enc-flow-wrap" id="encFlow">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- THREAT MONITOR -->
+  <div class="card danger col-6" style="animation-delay:0.4s">
+    <div class="card-inner">
+      <div class="card-label">THREAT MONITOR — REAL TIME<span class="card-badge badge-active">SCANNING</span></div>
+      <div class="threat-list" id="threatList"></div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div class="card purple col-6" style="animation-delay:0.45s">
+    <div class="card-inner">
+      <div class="card-label">SECURITY ACTIVITY LOG<span class="card-badge badge-active">LIVE</span></div>
+      <div class="log-list" id="activityLog"></div>
+    </div>
+  </div>
+
+  <!-- NETWORK MAP -->
+  <div class="card green col-6" style="animation-delay:0.5s">
+    <div class="card-inner">
+      <div class="card-label">ENCRYPTED NETWORK MAP<span class="card-badge badge-active">LIVE</span></div>
+      <div class="network-wrap">
+        <canvas id="networkCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALGORITHM TABLE -->
+  <div class="card blue col-6" style="animation-delay:0.55s">
+    <div class="card-inner">
+      <div class="card-label">CRYPTOGRAPHIC ALGORITHMS<span class="card-badge badge-active">ALL ACTIVE</span></div>
+      <table class="algo-table">
+        <thead>
+          <tr><th>ALGORITHM</th><th>PURPOSE</th><th>STRENGTH</th><th>STATUS</th></tr>
+        </thead>
+        <tbody id="algoTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KEY EXCHANGE VISUAL -->
+  <div class="card warning col-12" style="animation-delay:0.6s">
+    <div class="card-inner">
+      <div class="card-label">RSA KEY EXCHANGE PROTOCOL — VISUAL SIMULATION<span class="card-badge badge-active">SIMULATING</span></div>
+      <canvas id="keyExchangeCanvas" style="width:100%;height:200px;display:block;"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Clock
+function updateClock(){
+  document.getElementById('navTime').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+}
+setInterval(updateClock,1000);updateClock();
+
+// Fetch stats
+async function loadStats(){
+  try{
+    const r=await fetch('/api/users');
+    const d=await r.json();
+    if(d.success){
+      document.getElementById('statUsers').textContent=d.users.length;
+    }
+  }catch(e){}
+}
+loadStats();
+
+// Animate stat numbers
+function animateNum(el,target,duration=1500){
+  const start=Date.now();
+  const timer=setInterval(()=>{
+    const p=Math.min((Date.now()-start)/duration,1);
+    el.textContent=Math.floor(p*target);
+    if(p===1)clearInterval(timer);
+  },16);
+}
+setTimeout(()=>{
+  animateNum(document.getElementById('statMsgs'),Math.floor(Math.random()*50)+10);
+},300);
+
+// MSG CHART
+const ctx=document.getElementById('msgChart').getContext('2d');
+const hours=Array.from({length:12},(_,i)=>{
+  const h=new Date();h.setHours(h.getHours()-11+i);
+  return h.getHours().toString().padStart(2,'0')+':00';
+});
+const msgData=Array.from({length:12},()=>Math.floor(Math.random()*20)+2);
+new Chart(ctx,{
+  type:'line',
+  data:{
+    labels:hours,
+    datasets:[{
+      label:'Encrypted Messages',
+      data:msgData,
+      borderColor:'#00d4ff',
+      backgroundColor:'rgba(0,212,255,0.05)',
+      borderWidth:2,
+      pointBackgroundColor:'#00d4ff',
+      pointRadius:4,
+      pointHoverRadius:6,
+      fill:true,
+      tension:0.4
+    },{
+      label:'Key Exchanges',
+      data:msgData.map(v=>Math.floor(v*0.8)),
+      borderColor:'#00ff9d',
+      backgroundColor:'rgba(0,255,157,0.03)',
+      borderWidth:2,
+      pointBackgroundColor:'#00ff9d',
+      pointRadius:3,
+      fill:true,
+      tension:0.4
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#3a6070',font:{family:'Share Tech Mono',size:9},boxWidth:12}},
+      tooltip:{backgroundColor:'#051218',borderColor:'#0a2d3d',borderWidth:1,titleColor:'#00d4ff',bodyColor:'#c8e8f0',titleFont:{family:'Share Tech Mono'},bodyFont:{family:'Share Tech Mono'}}
+    },
+    scales:{
+      x:{grid:{color:'rgba(10,45,61,0.5)'},ticks:{color:'#2a5060',font:{family:'Share Tech Mono',size:8}}},
+      y:{grid:{color:'rgba(10,45,61,0.5)'},ticks:{color:'#2a5060',font:{family:'Share Tech Mono',size:8}}}
+    }
+  }
+});
+
+// Live update chart
+setInterval(()=>{
+  const chart=Chart.getChart('msgChart');
+  if(chart){
+    chart.data.datasets[0].data.push(Math.floor(Math.random()*20)+2);
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.push(Math.floor(Math.random()*15)+1);
+    chart.data.datasets[1].data.shift();
+    chart.update('none');
+  }
+},3000);
+
+// ENCRYPTION VISUALIZER
+const flowSteps=[
+  {label:'PLAINTEXT',color:'#00ff9d',bg:'rgba(0,255,157,0.08)',border:'rgba(0,255,157,0.25)',vals:['Hello!','Hi Sara!','Secret','Test msg','Secure!']},
+  {label:'AES-256 KEY',color:'#00d4ff',bg:'rgba(0,212,255,0.08)',border:'rgba(0,212,255,0.25)',vals:['K9mX2pL8','aE3fG7hI','bL2mN5oP','cS4tU7vW','dZ1aB4cD']},
+  {label:'IV VECTOR',color:'#a855f7',bg:'rgba(168,85,247,0.08)',border:'rgba(168,85,247,0.25)',vals:['8f3kL2mN','9g4lM3nO','0h5mN4oP','1i6nO5pQ','2j7oP6qR']},
+  {label:'CIPHERTEXT',color:'#ffb700',bg:'rgba(255,183,0,0.08)',border:'rgba(255,183,0,0.25)',vals:['gX9kL2mN8p','zR4sT7uV1w','aB3cD6eF9g','jK2lM5nO8p','xY1zA4bC7d']},
+  {label:'RSA WRAPPED',color:'#a855f7',bg:'rgba(168,85,247,0.08)',border:'rgba(168,85,247,0.25)',vals:['MIIBIjAN...','MIIBCGAA...','MIIBDwAA...','MIIBEgAA...','MIIBFwAA...']},
+  {label:'TRANSMITTED',color:'#ff3c5a',bg:'rgba(255,60,90,0.08)',border:'rgba(255,60,90,0.25)',vals:['[CIPHERTEXT]','[ENCRYPTED]','[SECURED]','[LOCKED]','[SEALED]']},
+  {label:'DECRYPTED',color:'#00ff9d',bg:'rgba(0,255,157,0.08)',border:'rgba(0,255,157,0.25)',vals:['Hello!','Hi Sara!','Secret','Test msg','Secure!']}
+];
+const arrows=['AES-256','+IV','ENCRYPT','RSA WRAP','TRANSMIT','DECRYPT'];
+let flowIdx=0;
+function renderFlow(){
+  const container=document.getElementById('encFlow');
+  container.innerHTML='';
+  flowSteps.forEach((step,i)=>{
+    const node=document.createElement('div');
+    node.className='enc-node';
+    node.innerHTML=`<div class="enc-node-box" style="background:${step.bg};border:1px solid ${step.border};color:${step.color};">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;">${step.label}</div>
+      <div class="enc-node-val" style="color:${step.color};">${step.vals[flowIdx]}</div>
+    </div>
+    <div class="enc-node-label">${step.label}</div>`;
+    container.appendChild(node);
+    if(i<flowSteps.length-1){
+      const arr=document.createElement('div');
+      arr.className='enc-arrow-wrap';
+      arr.innerHTML=`<div class="enc-arrow-line" style="background:linear-gradient(90deg,${step.color},${flowSteps[i+1].color});"></div>
+      <div style="color:${step.color};font-size:16px;">→</div>
+      <div class="enc-arrow-label">${arrows[i]}</div>`;
+      container.appendChild(arr);
+    }
+  });
+}
+renderFlow();
+setInterval(()=>{flowIdx=(flowIdx+1)%5;renderFlow();},2500);
+
+// THREAT MONITOR
+const threats=[
+  {dot:'safe',title:'ENCRYPTION VERIFIED',desc:'All messages using AES-256-CFB — No vulnerabilities detected',time:'NOW',badge:'SECURE',badgeClass:'badge-active'},
+  {dot:'safe',title:'RSA KEYS VALIDATED',desc:'RSA-2048 key pairs verified — OAEP padding confirmed',time:'1m ago',badge:'SECURE',badgeClass:'badge-active'},
+  {dot:'info',title:'NEW USER REGISTERED',desc:'RSA-2048 key pair generated for new account',time:'2m ago',badge:'INFO',badgeClass:''},
+  {dot:'safe',title:'SESSION AUTHENTICATED',desc:'bcrypt password verification successful',time:'3m ago',badge:'SECURE',badgeClass:'badge-active'},
+  {dot:'warning',title:'MULTIPLE LOGIN ATTEMPTS',desc:'3 consecutive login attempts from same session',time:'5m ago',badge:'WARN',badgeClass:'badge-warn'},
+  {dot:'info',title:'KEY EXCHANGE COMPLETED',desc:'AES session key encrypted with RSA public key',time:'6m ago',badge:'INFO',badgeClass:''},
+  {dot:'safe',title:'ZERO KNOWLEDGE CONFIRMED',desc:'Server stored only ciphertext — no plaintext exposure',time:'8m ago',badge:'SECURE',badgeClass:'badge-active'},
+];
+const tList=document.getElementById('threatList');
+threats.forEach((t,i)=>{
+  setTimeout(()=>{
+    const el=document.createElement('div');
+    el.className='threat-item';
+    el.innerHTML=`<div class="threat-dot ${t.dot}"></div>
+    <div class="threat-info">
+      <div class="threat-title">${t.title}</div>
+      <div class="threat-desc">${t.desc}</div>
+    </div>
+    <div class="threat-time">${t.time}</div>
+    ${t.badge?`<div class="threat-badge ${t.badgeClass}">${t.badge}</div>`:''}`;
+    tList.appendChild(el);
+  },i*200);
+});
+
+// Add live threats
+setInterval(()=>{
+  const msgs=['Message encrypted with AES-256','RSA key exchange completed','User authenticated via bcrypt','Session key generated — 256 bits'];
+  const el=document.createElement('div');
+  el.className='threat-item';
+  const msg=msgs[Math.floor(Math.random()*msgs.length)];
+  el.innerHTML=`<div class="threat-dot safe"></div>
+  <div class="threat-info"><div class="threat-title">LIVE EVENT</div><div class="threat-desc">${msg}</div></div>
+  <div class="threat-time">NOW</div>
+  <div class="threat-badge badge-active">LIVE</div>`;
+  tList.insertBefore(el,tList.firstChild);
+  if(tList.children.length>10)tList.removeChild(tList.lastChild);
+},5000);
+
+// ACTIVITY LOG
+const logs=[
+  {icon:'🔐',cls:'enc',title:'AES-256 ENCRYPTION',detail:'Message encrypted — Key: K9mX2pL8... IV: 8f3kL2mN...'},
+  {icon:'🔑',cls:'key',title:'RSA KEY GENERATED',detail:'RSA-2048 key pair created — Public key distributed'},
+  {icon:'💬',cls:'msg',title:'MESSAGE TRANSMITTED',detail:'Encrypted ciphertext sent — Server zero knowledge'},
+  {icon:'👤',cls:'login',title:'USER AUTHENTICATED',detail:'bcrypt verification passed — Session created'},
+  {icon:'🔐',cls:'enc',title:'KEY EXCHANGE',detail:'AES session key wrapped in RSA-2048 envelope'},
+  {icon:'💬',cls:'msg',title:'MESSAGE DECRYPTED',detail:'RSA private key unwrapped AES key — Plaintext recovered'},
+  {icon:'🔑',cls:'key',title:'SHA-256 VERIFIED',detail:'Message integrity confirmed via OAEP hash'},
+  {icon:'👤',cls:'login',title:'SESSION SECURED',detail:'Socket.IO connection established — TLS active'},
+];
+const aLog=document.getElementById('activityLog');
+logs.forEach((l,i)=>{
+  setTimeout(()=>{
+    const el=document.createElement('div');
+    el.className='log-item';
+    const t=new Date();t.setMinutes(t.getMinutes()-i*2);
+    el.innerHTML=`<div class="log-icon ${l.cls}">${l.icon}</div>
+    <div class="log-text">
+      <div class="log-title">${l.title}</div>
+      <div class="log-detail">${l.detail}</div>
+    </div>
+    <div class="log-time">${t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})}</div>`;
+    aLog.appendChild(el);
+  },i*150);
+});
+
+setInterval(()=>{
+  const events=[
+    {icon:'🔐',cls:'enc',title:'MSG ENCRYPTED',detail:'AES-256-CFB — ciphertext generated'},
+    {icon:'💬',cls:'msg',title:'MSG SENT',detail:'Encrypted payload transmitted via Socket.IO'},
+    {icon:'🔑',cls:'key',title:'KEY EXCHANGE',detail:'RSA-2048 OAEP key wrapping completed'},
+  ];
+  const ev=events[Math.floor(Math.random()*events.length)];
+  const el=document.createElement('div');
+  el.className='log-item';
+  el.innerHTML=`<div class="log-icon ${ev.cls}">${ev.icon}</div>
+  <div class="log-text"><div class="log-title">${ev.title}</div><div class="log-detail">${ev.detail}</div></div>
+  <div class="log-time">${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})}</div>`;
+  aLog.insertBefore(el,aLog.firstChild);
+  if(aLog.children.length>12)aLog.removeChild(aLog.lastChild);
+},4000);
+
+// NETWORK MAP
+const nc=document.getElementById('networkCanvas');
+nc.width=nc.offsetWidth||600;nc.height=280;
+const nctx=nc.getContext('2d');
+const nodes=[
+  {x:nc.width/2,y:140,label:'SERVER',color:'#00d4ff',r:22,main:true},
+  {x:100,y:80,label:'User A',color:'#00ff9d',r:16},
+  {x:nc.width-100,y:80,label:'User B',color:'#00ff9d',r:16},
+  {x:100,y:200,label:'User C',color:'#a855f7',r:16},
+  {x:nc.width-100,y:200,label:'User D',color:'#a855f7',r:16},
+  {x:nc.width/2,y:40,label:'User E',color:'#ffb700',r:14},
+  {x:nc.width/2,y:240,label:'User F',color:'#ffb700',r:14},
+];
+let packetAnim=[];
+let animFrame=0;
+
+function drawNetwork(){
+  nctx.clearRect(0,0,nc.width,nc.height);
+  // Lines
+  nodes.slice(1).forEach(n=>{
+    const gradient=nctx.createLinearGradient(nodes[0].x,nodes[0].y,n.x,n.y);
+    gradient.addColorStop(0,'rgba(0,212,255,0.3)');
+    gradient.addColorStop(1,'rgba(0,255,157,0.1)');
+    nctx.beginPath();nctx.moveTo(nodes[0].x,nodes[0].y);nctx.lineTo(n.x,n.y);
+    nctx.strokeStyle=gradient;nctx.lineWidth=1;nctx.setLineDash([4,4]);
+    nctx.lineDashOffset=-animFrame*0.5;nctx.stroke();nctx.setLineDash([]);
+  });
+  // Packets
+  packetAnim.forEach((p,i)=>{
+    p.progress+=0.02;
+    const from=nodes[0];const to=nodes[p.to];
+    const x=from.x+(to.x-from.x)*p.progress;
+    const y=from.y+(to.y-from.y)*p.progress;
+    nctx.beginPath();nctx.arc(x,y,3,0,Math.PI*2);
+    nctx.fillStyle=p.color;nctx.shadowBlur=8;nctx.shadowColor=p.color;nctx.fill();
+    nctx.shadowBlur=0;
+    if(p.progress>=1)packetAnim.splice(i,1);
+  });
+  // Nodes
+  nodes.forEach(n=>{
+    nctx.beginPath();nctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+    nctx.fillStyle=n.main?'rgba(0,212,255,0.15)':'rgba(0,255,157,0.08)';nctx.fill();
+    nctx.strokeStyle=n.color;nctx.lineWidth=2;nctx.stroke();
+    // Pulse ring
+    nctx.beginPath();nctx.arc(n.x,n.y,n.r+4+Math.sin(animFrame*0.05)*3,0,Math.PI*2);
+    nctx.strokeStyle=n.color+'33';nctx.lineWidth=1;nctx.stroke();
+    // Label
+    nctx.fillStyle=n.color;nctx.font=`700 9px 'Share Tech Mono'`;
+    nctx.textAlign='center';nctx.fillText(n.label,n.x,n.y+n.r+14);
+    // Lock icon
+    nctx.fillStyle=n.color;nctx.font='10px Arial';
+    nctx.fillText('🔐',n.x-5,n.y+4);
+  });
+  animFrame++;
+  requestAnimationFrame(drawNetwork);
+}
+drawNetwork();
+setInterval(()=>{
+  const to=Math.floor(Math.random()*6)+1;
+  const colors=['#00d4ff','#00ff9d','#a855f7','#ffb700'];
+  packetAnim.push({to,progress:0,color:colors[Math.floor(Math.random()*colors.length)]});
+},800);
+
+// ALGORITHM TABLE
+const algos=[
+  {name:'AES-256-CFB',purpose:'Message Encryption',strength:100,color:'#00d4ff',status:'ACTIVE'},
+  {name:'RSA-2048-OAEP',purpose:'Key Exchange',strength:98,color:'#00ff9d',status:'ACTIVE'},
+  {name:'bcrypt (cost:12)',purpose:'Password Hashing',strength:95,color:'#a855f7',status:'ACTIVE'},
+  {name:'SHA-256',purpose:'OAEP Hash Function',strength:99,color:'#ffb700',status:'ACTIVE'},
+  {name:'CFB Mode IV',purpose:'Initialization Vector',strength:92,color:'#00d4ff',status:'ACTIVE'},
+  {name:'Socket.IO TLS',purpose:'Transport Security',strength:90,color:'#00ff9d',status:'ACTIVE'},
+];
+const tbody=document.getElementById('algoTable');
+algos.forEach(a=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td style="color:${a.color};font-weight:700;">${a.name}</td>
+  <td style="color:#3a6070;">${a.purpose}</td>
+  <td><div class="strength-bar-wrap">
+    <div class="strength-bar-bg"><div class="strength-bar-fill" style="width:0%;background:${a.color};" data-w="${a.strength}"></div></div>
+    <span style="color:${a.color};font-size:8px;">${a.strength}%</span>
+  </div></td>
+  <td><span class="status-pill badge-active">● ${a.status}</span></td>`;
+  tbody.appendChild(tr);
+});
+setTimeout(()=>{
+  document.querySelectorAll('.strength-bar-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});
+},500);
+
+// KEY EXCHANGE ANIMATION
+const kc=document.getElementById('keyExchangeCanvas');
+kc.width=kc.offsetWidth||900;kc.height=200;
+const kctx=kc.getContext('2d');
+let kFrame=0;
+const aliceX=100,bobX=kc.width-100,serverX=kc.width/2;
+
+function drawKeyExchange(){
+  kctx.clearRect(0,0,kc.width,kc.height);
+  // Background
+  kctx.fillStyle='rgba(5,18,24,0.5)';kctx.fillRect(0,0,kc.width,kc.height);
+
+  // Actors
+  const actors=[
+    {x:aliceX,label:'ALICE',color:'#00ff9d',sublabel:'Sender'},
+    {x:serverX,label:'SERVER',color:'#00d4ff',sublabel:'Zero Knowledge'},
+    {x:bobX,label:'BOB',color:'#a855f7',sublabel:'Receiver'},
+  ];
+  actors.forEach(a=>{
+    kctx.fillStyle=a.color+'22';kctx.fillRect(a.x-30,20,60,160);
+    kctx.strokeStyle=a.color+'44';kctx.lineWidth=1;kctx.strokeRect(a.x-30,20,60,160);
+    kctx.fillStyle=a.color;kctx.font='700 10px Orbitron';kctx.textAlign='center';
+    kctx.fillText(a.label,a.x,15);
+    kctx.fillStyle='#2a5060';kctx.font='8px Share Tech Mono';
+    kctx.fillText(a.sublabel,a.x,170+20);
+    // Line
+    kctx.strokeStyle=a.color+'33';kctx.lineWidth=1;kctx.setLineDash([3,3]);
+    kctx.beginPath();kctx.moveTo(a.x,30);kctx.lineTo(a.x,170);kctx.stroke();
+    kctx.setLineDash([]);
+  });
+
+  // Animated arrows
+  const steps=[
+    {from:aliceX,to:serverX,y:50,label:'AES-256 Encrypted Message',color:'#ffb700',phase:0},
+    {from:aliceX,to:serverX,y:80,label:'RSA(AES Key) — Bob Public Key',color:'#00d4ff',phase:60},
+    {from:serverX,to:bobX,y:110,label:'Forward Ciphertext',color:'#ff3c5a',phase:120},
+    {from:bobX,to:bobX,y:140,label:'RSA Decrypt → AES Key → Plaintext',color:'#00ff9d',phase:180,self:true},
+  ];
+
+  steps.forEach(s=>{
+    const p=((kFrame-s.phase+300)%300)/120;
+    if(p<0||p>1&&!s.self)return;
+    const clampedP=Math.min(p,1);
+    const x=s.self?s.from:s.from+(s.to-s.from)*clampedP;
+    // Arrow line
+    kctx.beginPath();kctx.moveTo(s.from,s.y);
+    kctx.lineTo(s.self?s.from:s.from+(s.to-s.from)*clampedP,s.y);
+    kctx.strokeStyle=s.color;kctx.lineWidth=1.5;kctx.stroke();
+    // Arrowhead
+    if(!s.self&&clampedP>0.1){
+      const dir=s.to>s.from?1:-1;
+      kctx.beginPath();kctx.moveTo(x,s.y);
+      kctx.lineTo(x-dir*8,s.y-4);kctx.lineTo(x-dir*8,s.y+4);kctx.closePath();
+      kctx.fillStyle=s.color;kctx.fill();
+    }
+    // Moving packet
+    if(!s.self){
+      kctx.beginPath();kctx.arc(x,s.y,5,0,Math.PI*2);
+      kctx.fillStyle=s.color;kctx.shadowBlur=10;kctx.shadowColor=s.color;kctx.fill();kctx.shadowBlur=0;
+    }
+    // Label
+    const midX=(s.from+s.to)/2;
+    kctx.fillStyle=s.color+'cc';kctx.font='8px Share Tech Mono';kctx.textAlign='center';
+    kctx.fillText(s.label,s.self?s.from+80:midX,s.y-6);
+  });
+
+  kFrame++;
+  requestAnimationFrame(drawKeyExchange);
+}
+drawKeyExchange();
+</script>
+</body>
+</html>

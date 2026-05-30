@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — How It Works</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020c10;--surface:#051218;--border:#0a2d3d;--accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;--text:#c8e8f0;--muted:#2a5060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.018) 1px,transparent 1px);background-size:45px 45px;pointer-events:none;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes flow{0%{stroke-dashoffset:200}100%{stroke-dashoffset:0}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,212,255,0.1);background:rgba(2,12,16,0.95);backdrop-filter:blur(10px);}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-decoration:none;transition:color 0.2s;}
+.nav-link:hover,.nav-link.active{color:var(--accent);}
+.nav-cta{padding:7px 18px;border:1px solid var(--accent);color:var(--accent);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all 0.2s;}
+.nav-cta:hover{background:var(--accent);color:#000;}
+
+.page-hero{padding:140px 60px 80px;text-align:center;position:relative;z-index:1;}
+.page-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:16px;}
+.page-title{font-family:'Orbitron',sans-serif;font-size:56px;font-weight:900;color:var(--text);letter-spacing:2px;line-height:1.1;margin-bottom:20px;}
+.page-title span{color:var(--accent);}
+.page-sub{font-size:18px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.8;font-weight:300;}
+
+.section{padding:80px 60px;position:relative;z-index:1;}
+.section-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:12px;}
+.section-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:700;color:var(--text);margin-bottom:40px;}
+.section-title span{color:var(--accent);}
+
+/* Steps */
+.steps-wrap{max-width:900px;margin:0 auto;}
+.step-row{display:flex;gap:32px;margin-bottom:48px;align-items:flex-start;}
+.step-row.reverse{flex-direction:row-reverse;}
+.step-num-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;}
+.step-num{width:64px;height:64px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;flex-shrink:0;}
+.step-line{width:2px;height:60px;margin-top:8px;}
+.step-content{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:28px;position:relative;overflow:hidden;}
+.step-content::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
+.step-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;margin-bottom:12px;}
+.step-desc{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:16px;}
+.step-code{background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:3px;padding:14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);line-height:2;}
+.step-code .comment{color:var(--muted);}
+.step-code .keyword{color:var(--accent);}
+.step-code .value{color:var(--warning);}
+
+/* Encryption Demo */
+.enc-demo{max-width:1000px;margin:0 auto;}
+.enc-demo-flow{display:flex;align-items:stretch;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.enc-demo-step{flex:1;padding:24px;border-right:1px solid var(--border);position:relative;}
+.enc-demo-step:last-child{border-right:none;}
+.enc-demo-step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.eds1::before{background:var(--accent2);}
+.eds2::before{background:var(--accent);}
+.eds3::before{background:var(--warning);}
+.eds4::before{background:var(--purple);}
+.eds5::before{background:var(--accent2);}
+.enc-demo-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;margin-bottom:12px;}
+.enc-demo-val{font-family:'Share Tech Mono',monospace;font-size:10px;word-break:break-all;line-height:1.6;padding:10px;background:rgba(0,0,0,0.4);border-radius:2px;min-height:60px;}
+.enc-demo-icon{font-size:24px;margin-bottom:8px;display:block;}
+
+/* Key exchange visual */
+.key-exchange{max-width:900px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:32px;}
+.ke-actors{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;}
+.ke-actor{text-align:center;flex:1;}
+.ke-actor-box{width:80px;height:80px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;border:2px solid;}
+.ke-actor-name{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;}
+.ke-actor-desc{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+.ke-flow{display:flex;flex-direction:column;gap:12px;}
+.ke-arrow{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:3px;}
+.ke-arrow-icon{font-size:20px;flex-shrink:0;}
+.ke-arrow-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);flex:1;letter-spacing:1px;}
+.ke-arrow-badge{padding:2px 8px;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;flex-shrink:0;}
+
+/* FAQ */
+.faq-list{max-width:800px;margin:0 auto;}
+.faq-item{border:1px solid var(--border);border-radius:3px;margin-bottom:12px;overflow:hidden;}
+.faq-q{padding:18px 24px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:12px;color:var(--text);letter-spacing:2px;display:flex;justify-content:space-between;align-items:center;transition:background 0.2s;}
+.faq-q:hover{background:rgba(0,212,255,0.04);}
+.faq-arrow{color:var(--accent);font-size:16px;transition:transform 0.3s;}
+.faq-a{padding:0 24px;max-height:0;overflow:hidden;transition:all 0.3s;font-size:14px;color:var(--muted);line-height:1.8;}
+.faq-item.open .faq-a{max-height:200px;padding:0 24px 18px;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);}
+
+footer{padding:40px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+.footer-brand{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:3px;}
+.footer-links{display:flex;gap:24px;}
+.footer-link{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:2px;transition:color 0.2s;}
+.footer-link:hover{color:var(--accent);}
+.reveal{opacity:0;transform:translateY(20px);transition:all 0.6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/landing" class="nav-logo">🔐 SECURECHAT</a>
+  <div class="nav-links">
+    <a href="/landing" class="nav-link">HOME</a>
+    <a href="/features" class="nav-link">FEATURES</a>
+    <a href="/how-it-works" class="nav-link active">HOW IT WORKS</a>
+    <a href="/about" class="nav-link">ABOUT</a>
+    <a href="/login" class="nav-cta">LAUNCH APP →</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="page-tag">// ENCRYPTION EXPLAINED</span>
+  <h1 class="page-title">How <span>Encryption</span><br>Actually Works</h1>
+  <p class="page-sub">A step-by-step breakdown of how SecureChat encrypts every message using AES-256 and RSA-2048 to ensure only the intended recipient can read it.</p>
+</div>
+
+<section class="section">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// STEP BY STEP</span>
+    <h2 class="section-title">The Encryption <span>Process</span></h2>
+  </div>
+  <div class="steps-wrap">
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(0,212,255,0.1);border:2px solid var(--accent);color:var(--accent);">01</div>
+        <div class="step-line" style="background:linear-gradient(180deg,var(--accent),var(--accent2));"></div>
+      </div>
+      <div class="step-content" style="border-color:rgba(0,212,255,0.2);">
+        <div class="step-content" style="border:none;padding:0;"><div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--accent);border-radius:2px 0 0 2px;"></div></div>
+        <div class="step-title" style="color:var(--accent);">USER REGISTERS — RSA KEYS GENERATED</div>
+        <p class="step-desc">When a new user registers, the server automatically generates a unique RSA-2048 key pair. The public key is stored and shared with other users. The private key is stored securely and never transmitted.</p>
+        <div class="step-code">
+          <span class="comment"># RSA-2048 key pair generation</span><br>
+          private_key = rsa.generate_private_key(<br>
+          &nbsp;&nbsp;<span class="keyword">public_exponent</span>=<span class="value">65537</span>,<br>
+          &nbsp;&nbsp;<span class="keyword">key_size</span>=<span class="value">2048</span><br>
+          )<br>
+          public_key = private_key.public_key()
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(0,255,157,0.1);border:2px solid var(--accent2);color:var(--accent2);">02</div>
+        <div class="step-line" style="background:linear-gradient(180deg,var(--accent2),var(--warning));"></div>
+      </div>
+      <div class="step-content" style="border-color:rgba(0,255,157,0.2);position:relative;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--accent2);border-radius:2px 0 0 2px;"></div>
+        <div class="step-title" style="color:var(--accent2);">AES-256 SESSION KEY GENERATED</div>
+        <p class="step-desc">When sending a message, a random 256-bit AES session key is generated. This key is unique for every single message, ensuring perfect forward secrecy.</p>
+        <div class="step-code">
+          <span class="comment"># Random AES-256 session key</span><br>
+          aes_key = os.urandom(<span class="value">32</span>) <span class="comment"># 256 bits</span><br>
+          iv = os.urandom(<span class="value">16</span>)&nbsp;&nbsp;<span class="comment"># Random IV</span><br>
+          <span class="comment"># New key generated per message!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(255,183,0,0.1);border:2px solid var(--warning);color:var(--warning);">03</div>
+        <div class="step-line" style="background:linear-gradient(180deg,var(--warning),var(--purple));"></div>
+      </div>
+      <div class="step-content" style="border-color:rgba(255,183,0,0.2);position:relative;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--warning);border-radius:2px 0 0 2px;"></div>
+        <div class="step-title" style="color:var(--warning);">MESSAGE ENCRYPTED WITH AES-256</div>
+        <p class="step-desc">The plaintext message is encrypted using AES-256-CFB mode with the session key and random IV. The result is unreadable ciphertext that can only be decrypted with the correct key.</p>
+        <div class="step-code">
+          <span class="comment"># AES-256-CFB encryption</span><br>
+          cipher = Cipher(AES(aes_key), CFB(iv))<br>
+          ciphertext = cipher.encrypt(<span class="value">"Hello!"</span>.encode())<br>
+          <span class="comment"># Output: gX9kL2mN8pQrS4tU...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(168,85,247,0.1);border:2px solid var(--purple);color:var(--purple);">04</div>
+        <div class="step-line" style="background:linear-gradient(180deg,var(--purple),var(--danger));"></div>
+      </div>
+      <div class="step-content" style="border-color:rgba(168,85,247,0.2);position:relative;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--purple);border-radius:2px 0 0 2px;"></div>
+        <div class="step-title" style="color:var(--purple);">AES KEY WRAPPED WITH RSA-2048</div>
+        <p class="step-desc">The AES session key is encrypted using the receiver's RSA-2048 public key with OAEP padding. Now only the receiver's private key can unwrap the AES key.</p>
+        <div class="step-code">
+          <span class="comment"># RSA-OAEP key wrapping</span><br>
+          encrypted_key = receiver_public_key.encrypt(<br>
+          &nbsp;&nbsp;aes_key,<br>
+          &nbsp;&nbsp;OAEP(SHA256())<br>
+          )<span class="comment"> # Only receiver can decrypt!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(255,60,90,0.1);border:2px solid var(--danger);color:var(--danger);">05</div>
+        <div class="step-line" style="background:linear-gradient(180deg,var(--danger),var(--accent2));"></div>
+      </div>
+      <div class="step-content" style="border-color:rgba(255,60,90,0.2);position:relative;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--danger);border-radius:2px 0 0 2px;"></div>
+        <div class="step-title" style="color:var(--danger);">CIPHERTEXT TRANSMITTED</div>
+        <p class="step-desc">The encrypted message and RSA-wrapped AES key are sent to the server and forwarded to the receiver. The server only sees ciphertext — it cannot read the message.</p>
+        <div class="step-code">
+          <span class="comment"># Server stores only encrypted data</span><br>
+          message = Message(<br>
+          &nbsp;&nbsp;<span class="keyword">encrypted_message</span>=ciphertext,<br>
+          &nbsp;&nbsp;<span class="keyword">encrypted_key</span>=rsa_wrapped_key<br>
+          )<span class="comment"> # Zero plaintext!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-row reveal">
+      <div class="step-num-wrap">
+        <div class="step-num" style="background:rgba(0,255,157,0.1);border:2px solid var(--accent2);color:var(--accent2);">06</div>
+      </div>
+      <div class="step-content" style="border-color:rgba(0,255,157,0.2);position:relative;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--accent2);border-radius:2px 0 0 2px;"></div>
+        <div class="step-title" style="color:var(--accent2);">RECEIVER DECRYPTS — READS MESSAGE</div>
+        <p class="step-desc">The receiver uses their RSA private key to unwrap the AES session key, then uses that AES key to decrypt the ciphertext. The original message is recovered — only by the intended recipient.</p>
+        <div class="step-code">
+          <span class="comment"># Receiver decryption</span><br>
+          aes_key = private_key.decrypt(encrypted_key)<br>
+          plaintext = aes_decrypt(ciphertext, aes_key)<br>
+          <span class="comment"># Output: "Hello!" — Only receiver!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:rgba(5,18,24,0.5);">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// LIVE DEMO</span>
+    <h2 class="section-title">Encryption <span>In Action</span></h2>
+  </div>
+  <div class="enc-demo reveal">
+    <div class="enc-demo-flow">
+      <div class="enc-demo-step eds1">
+        <span class="enc-demo-icon">📝</span>
+        <div class="enc-demo-label" style="color:var(--accent2);">PLAINTEXT MESSAGE</div>
+        <div class="enc-demo-val" style="color:var(--accent2);" id="demoPlain">Hello Sara!</div>
+      </div>
+      <div class="enc-demo-step eds2">
+        <span class="enc-demo-icon">🔑</span>
+        <div class="enc-demo-label" style="color:var(--accent);">AES-256 KEY</div>
+        <div class="enc-demo-val" style="color:var(--accent);" id="demoKey">K9mX2pL8qR3sT...</div>
+      </div>
+      <div class="enc-demo-step eds3">
+        <span class="enc-demo-icon">🔐</span>
+        <div class="enc-demo-label" style="color:var(--warning);">CIPHERTEXT</div>
+        <div class="enc-demo-val" style="color:var(--warning);" id="demoCipher">gX9kL2mN8pQrS4...</div>
+      </div>
+      <div class="enc-demo-step eds4">
+        <span class="enc-demo-icon">🔒</span>
+        <div class="enc-demo-label" style="color:var(--purple);">RSA WRAPPED</div>
+        <div class="enc-demo-val" style="color:var(--purple);" id="demoRsa">MIIBIjANBgkqhkiG9...</div>
+      </div>
+      <div class="enc-demo-step eds5">
+        <span class="enc-demo-icon">✅</span>
+        <div class="enc-demo-label" style="color:var(--accent2);">DECRYPTED</div>
+        <div class="enc-demo-val" style="color:var(--accent2);" id="demoDecrypt">Hello Sara!</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// FAQ</span>
+    <h2 class="section-title">Common <span>Questions</span></h2>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)">CAN THE SERVER READ MY MESSAGES?<span class="faq-arrow">▼</span></div>
+      <div class="faq-a">No. The server only stores encrypted ciphertext. Without the receiver's private RSA key, the ciphertext is mathematically impossible to decrypt. This is true end-to-end encryption.</div>
+    </div>
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)">HOW STRONG IS AES-256?<span class="faq-arrow">▼</span></div>
+      <div class="faq-a">AES-256 has 2²⁵⁶ possible keys. Even if every computer on Earth tried one trillion keys per second, it would take longer than the age of the universe to crack. It is the standard used by governments and militaries worldwide.</div>
+    </div>
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)">WHAT IS RSA-2048 USED FOR?<span class="faq-arrow">▼</span></div>
+      <div class="faq-a">RSA-2048 is used for key exchange, not message encryption. The AES-256 session key is wrapped (encrypted) using the receiver's RSA public key. Only their RSA private key can unwrap it, making the AES key accessible only to the intended recipient.</div>
+    </div>
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)">HOW ARE PASSWORDS STORED?<span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Passwords are never stored in plaintext. They are hashed using bcrypt with a unique random salt. bcrypt is an adaptive hashing algorithm designed specifically for passwords, making brute force attacks computationally expensive.</div>
+    </div>
+    <div class="faq-item reveal">
+      <div class="faq-q" onclick="toggleFaq(this)">IS EVERY MESSAGE UNIQUELY ENCRYPTED?<span class="faq-arrow">▼</span></div>
+      <div class="faq-a">Yes. A new random AES-256 session key and random IV (Initialization Vector) are generated for every single message. This means even if two identical messages are sent, their ciphertexts will be completely different.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">🔐 SECURECHAT</div>
+  <div class="footer-links">
+    <a href="/landing" class="footer-link">HOME</a>
+    <a href="/features" class="footer-link">FEATURES</a>
+    <a href="/about" class="footer-link">ABOUT</a>
+    <a href="/dashboard" class="footer-link">DASHBOARD</a>
+    <a href="/login" class="footer-link">LOGIN</a>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">AES-256 + RSA-2048</div>
+</footer>
+
+<script>
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+function toggleFaq(el){
+  const item=el.parentElement;
+  item.classList.toggle('open');
+}
+
+// Demo animation
+const msgs=['Hello Sara!','Secret message','Hi there!','Test 123','Secure!'];
+const ciphers=['gX9kL2mN8pQ','zR4sT7uV1wX','aB3cD6eF9gH','jK2lM5nO8pQ','xY1zA4bC7dE'];
+const keys=['K9mX2pL8qR3s','aE3fG7hI1jKl','bL2mN5oP8qRs','cS4tU7vW0xYz','dZ1aB4cD7eFg'];
+const rsas=['MIIBIjANBgkq','MIIBCGAA+xRt','MIIBDwAA9kLm','MIIBEgAA2jNp','MIIBFwAA7mQr'];
+let idx=0;
+setInterval(()=>{
+  idx=(idx+1)%msgs.length;
+  document.getElementById('demoPlain').textContent=msgs[idx];
+  document.getElementById('demoKey').textContent=keys[idx]+'...';
+  document.getElementById('demoCipher').textContent=ciphers[idx]+'...';
+  document.getElementById('demoRsa').textContent=rsas[idx]+'...';
+  document.getElementById('demoDecrypt').textContent=msgs[idx];
+},2500);
+</script>
+</body>
+</html>

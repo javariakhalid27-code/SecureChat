@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — Security Audit Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0e13;--surface:#161b22;--surface2:#21262d;--border:#30363d;--accent:#58a6ff;--accent2:#3fb950;--danger:#f85149;--warning:#d29922;--purple:#bc8cff;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+nav{position:sticky;top:0;z-index:100;padding:14px 32px;background:rgba(10,14,19,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(10px);display:flex;align-items:center;gap:16px;}
+.nav-back{padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;text-decoration:none;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.nav-back:hover{color:var(--text);border-color:var(--text2);}
+.nav-title{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;}
+.live-badge{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.2);border-radius:20px;font-size:12px;color:var(--accent2);font-weight:500;margin-left:auto;}
+.live-dot{width:6px;height:6px;background:var(--accent2);border-radius:50%;animation:pulse 1.5s infinite;}
+.nav-time{font-size:12px;color:var(--text3);}
+
+.page{padding:24px 32px;}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;animation:fadeIn 0.4s ease both;}
+.stat-card::before{content:'';display:block;height:3px;border-radius:3px 3px 0 0;margin:-16px -16px 14px;}
+.sc-blue::before{background:var(--accent);}
+.sc-green::before{background:var(--accent2);}
+.sc-purple::before{background:var(--purple);}
+.sc-warning::before{background:var(--warning);}
+.sc-danger::before{background:var(--danger);}
+.stat-n{font-size:32px;font-weight:700;margin-bottom:4px;}
+.stat-l{font-size:12px;color:var(--text3);}
+
+/* Filters */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-btn{padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;}
+.filter-btn:hover{color:var(--text);border-color:var(--text2);}
+.filter-btn.active{background:rgba(88,166,255,0.1);border-color:var(--accent);color:var(--accent);}
+.search-input{padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:'Inter',sans-serif;margin-left:auto;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--text3);}
+.refresh-btn{padding:6px 14px;background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.2);border-radius:8px;color:var(--accent);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.refresh-btn:hover{background:rgba(88,166,255,0.2);}
+
+/* Table */
+.log-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.log-table{width:100%;border-collapse:collapse;}
+.log-table th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.log-table td{padding:12px 16px;border-bottom:1px solid rgba(48,54,61,0.5);font-size:13px;vertical-align:middle;}
+.log-table tr:last-child td{border-bottom:none;}
+.log-table tr{animation:fadeIn 0.3s ease both;}
+.log-table tr:hover td{background:rgba(88,166,255,0.03);}
+
+/* Status pills */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.sp-success{background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.2);color:var(--accent2);}
+.sp-warning{background:rgba(210,153,34,0.1);border:1px solid rgba(210,153,34,0.2);color:var(--warning);}
+.sp-danger{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.2);color:var(--danger);}
+.sp-dot{width:5px;height:5px;border-radius:50%;}
+
+/* Action badges */
+.action-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;}
+.ab-login{background:rgba(88,166,255,0.1);color:var(--accent);}
+.ab-register{background:rgba(63,185,80,0.1);color:var(--accent2);}
+.ab-msg{background:rgba(188,140,255,0.1);color:var(--purple);}
+.ab-logout{background:rgba(110,118,129,0.1);color:var(--text3);}
+.ab-lock{background:rgba(248,81,73,0.1);color:var(--danger);}
+.ab-block{background:rgba(210,153,34,0.1);color:var(--warning);}
+
+/* User avatar */
+.log-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+
+/* Empty */
+.empty-log{padding:60px;text-align:center;color:var(--text3);}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);}
+.page-info{font-size:13px;color:var(--text3);}
+.page-btns{display:flex;gap:6px;}
+.page-btn{padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.page-btn:hover{color:var(--text);border-color:var(--text2);}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/chat" class="nav-back">← Back to Chat</a>
+  <div class="nav-title">🛡️ Security Audit Log</div>
+  <div class="live-badge"><div class="live-dot"></div>Live Monitoring</div>
+  <div class="nav-time" id="navTime">--:--:--</div>
+</nav>
+
+<div class="page">
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card sc-blue" style="animation-delay:0.05s">
+      <div class="stat-n" id="sTotalLogs" style="color:var(--accent)">0</div>
+      <div class="stat-l">Total Events</div>
+    </div>
+    <div class="stat-card sc-green" style="animation-delay:0.1s">
+      <div class="stat-n" id="sTotalUsers" style="color:var(--accent2)">0</div>
+      <div class="stat-l">Active Users</div>
+    </div>
+    <div class="stat-card sc-purple" style="animation-delay:0.15s">
+      <div class="stat-n" id="sTotalMsgs" style="color:var(--purple)">0</div>
+      <div class="stat-l">Msgs Encrypted</div>
+    </div>
+    <div class="stat-card sc-warning" style="animation-delay:0.2s">
+      <div class="stat-n" id="sFailedLogins" style="color:var(--warning)">0</div>
+      <div class="stat-l">Failed Logins</div>
+    </div>
+    <div class="stat-card sc-danger" style="animation-delay:0.25s">
+      <div class="stat-n" id="sLockedAccounts" style="color:var(--danger)">0</div>
+      <div class="stat-l">Locked Accounts</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterLogs('all',this)">All Events</button>
+    <button class="filter-btn" onclick="filterLogs('success',this)">✅ Success</button>
+    <button class="filter-btn" onclick="filterLogs('warning',this)">⚠️ Warning</button>
+    <button class="filter-btn" onclick="filterLogs('danger',this)">🚨 Danger</button>
+    <button class="refresh-btn" onclick="loadLogs()">↻ Refresh</button>
+    <input class="search-input" id="logSearch" placeholder="Search logs..." oninput="searchLogs()"/>
+  </div>
+
+  <!-- Table -->
+  <div class="log-table-wrap">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Detail</th>
+          <th>IP Address</th>
+          <th>Status</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="logBody">
+        <tr><td colspan="7"><div class="empty-log"><div class="empty-icon">🔍</div><div>Loading security logs...</div></div></td></tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <div class="page-info" id="pageInfo">Showing 0 events</div>
+      <div class="page-btns">
+        <button class="page-btn" onclick="loadLogs()">↻ Refresh</button>
+        <button class="page-btn" onclick="window.location.href='/dashboard'">📊 Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let allLogs=[], currentFilter='all';
+
+function updateClock(){document.getElementById('navTime').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});}
+setInterval(updateClock,1000);updateClock();
+
+const gradients=['linear-gradient(135deg,#1f6feb,#388bfd)','linear-gradient(135deg,#238636,#2ea043)','linear-gradient(135deg,#8957e5,#a371f7)','linear-gradient(135deg,#b45309,#d97706)','linear-gradient(135deg,#9d174d,#db2777)'];
+function getGrad(name){if(!name)return gradients[0];return gradients[name.charCodeAt(0)%gradients.length];}
+
+function getActionClass(action){
+  if(action.includes('LOGIN_SUCCESS'))return 'ab-login';
+  if(action.includes('LOGIN_FAILED')||action.includes('LOGIN_BLOCKED'))return 'ab-block';
+  if(action.includes('REGISTER'))return 'ab-register';
+  if(action.includes('MESSAGE'))return 'ab-msg';
+  if(action.includes('LOGOUT'))return 'ab-logout';
+  if(action.includes('LOCK'))return 'ab-lock';
+  return 'ab-login';
+}
+
+function getStatusPill(status){
+  if(status==='success')return '<span class="status-pill sp-success"><span class="sp-dot" style="background:#3fb950"></span>Secure</span>';
+  if(status==='warning')return '<span class="status-pill sp-warning"><span class="sp-dot" style="background:#d29922"></span>Warning</span>';
+  if(status==='danger')return '<span class="status-pill sp-danger"><span class="sp-dot" style="background:#f85149;animation:pulse 1s infinite"></span>Alert</span>';
+  return '';
+}
+
+async function loadLogs(){
+  try{
+    const res=await fetch('/api/audit-logs');
+    const d=await res.json();
+    if(d.success){allLogs=d.logs;renderLogs(allLogs);}
+    const sr=await fetch('/api/security-stats');
+    const sd=await sr.json();
+    if(sd.success){
+      document.getElementById('sTotalLogs').textContent=sd.total_logs;
+      document.getElementById('sTotalUsers').textContent=sd.total_users;
+      document.getElementById('sTotalMsgs').textContent=sd.total_messages;
+      document.getElementById('sFailedLogins').textContent=sd.failed_logins;
+      document.getElementById('sLockedAccounts').textContent=sd.locked_accounts;
+    }
+  }catch(e){console.error(e);}
+}
+
+function renderLogs(logs){
+  const tbody=document.getElementById('logBody');
+  if(!logs.length){
+    tbody.innerHTML='<tr><td colspan="7"><div class="empty-log"><div class="empty-icon">🔒</div><div>No security events recorded yet.<br>Start using SecureChat to generate logs.</div></div></td></tr>';
+    document.getElementById('pageInfo').textContent='Showing 0 events';
+    return;
+  }
+  document.getElementById('pageInfo').textContent=`Showing ${logs.length} events`;
+  tbody.innerHTML=logs.map((l,i)=>`
+    <tr style="animation-delay:${i*0.02}s">
+      <td style="color:var(--text3);font-size:11px;">#${l.id}</td>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div class="log-av" style="background:${getGrad(l.username)}">${(l.username||'?')[0].toUpperCase()}</div>
+        <span style="font-weight:500;">${l.username||'Unknown'}</span>
+      </div></td>
+      <td><span class="action-badge ${getActionClass(l.action)}">${l.action}</span></td>
+      <td style="color:var(--text2);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.detail||''}">${l.detail||'—'}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);">${l.ip_address||'—'}</td>
+      <td>${getStatusPill(l.status)}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:nowrap;">${l.timestamp}</td>
+    </tr>`).join('');
+}
+
+function filterLogs(filter,btn){
+  currentFilter=filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const q=document.getElementById('logSearch').value.toLowerCase();
+  let filtered=allLogs;
+  if(filter!=='all')filtered=filtered.filter(l=>l.status===filter);
+  if(q)filtered=filtered.filter(l=>(l.username||'').toLowerCase().includes(q)||(l.action||'').toLowerCase().includes(q)||(l.detail||'').toLowerCase().includes(q));
+  renderLogs(filtered);
+}
+
+function searchLogs(){
+  const q=document.getElementById('logSearch').value.toLowerCase();
+  let filtered=allLogs;
+  if(currentFilter!=='all')filtered=filtered.filter(l=>l.status===currentFilter);
+  if(q)filtered=filtered.filter(l=>(l.username||'').toLowerCase().includes(q)||(l.action||'').toLowerCase().includes(q)||(l.detail||'').toLowerCase().includes(q));
+  renderLogs(filtered);
+}
+
+loadLogs();
+setInterval(loadLogs, 10000);
+</script>
+</body>
+</html>

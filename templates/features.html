@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — Features</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020c10;--surface:#051218;--border:#0a2d3d;--accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;--text:#c8e8f0;--muted:#2a5060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.018) 1px,transparent 1px);background-size:45px 45px;pointer-events:none;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,212,255,0.1);background:rgba(2,12,16,0.95);backdrop-filter:blur(10px);}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-decoration:none;transition:color 0.2s;}
+.nav-link:hover,.nav-link.active{color:var(--accent);}
+.nav-cta{padding:7px 18px;border:1px solid var(--accent);color:var(--accent);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all 0.2s;}
+.nav-cta:hover{background:var(--accent);color:#000;}
+.page-hero{padding:140px 60px 80px;text-align:center;position:relative;z-index:1;}
+.page-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:16px;}
+.page-title{font-family:'Orbitron',sans-serif;font-size:56px;font-weight:900;color:var(--text);letter-spacing:2px;line-height:1.1;margin-bottom:20px;}
+.page-title span{color:var(--accent);}
+.page-sub{font-size:18px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.8;font-weight:300;}
+.section{padding:80px 60px;position:relative;z-index:1;}
+.section-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:4px;display:block;margin-bottom:12px;}
+.section-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:700;color:var(--text);margin-bottom:40px;}
+.section-title span{color:var(--accent);}
+
+/* Feature Cards */
+.features-big{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1100px;margin:0 auto;}
+.feature-big-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:36px;position:relative;overflow:hidden;transition:all 0.3s;}
+.feature-big-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;transition:opacity 0.3s;}
+.feature-big-card.blue::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.feature-big-card.green::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.feature-big-card.purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.feature-big-card.warning::before{background:linear-gradient(90deg,transparent,var(--warning),transparent);}
+.feature-big-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.4);}
+.feature-big-icon{font-size:48px;margin-bottom:20px;display:block;}
+.feature-big-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;}
+.feature-big-card.blue .feature-big-title{color:var(--accent);}
+.feature-big-card.green .feature-big-title{color:var(--accent2);}
+.feature-big-card.purple .feature-big-title{color:var(--purple);}
+.feature-big-card.warning .feature-big-title{color:var(--warning);}
+.feature-big-desc{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px;}
+.feature-list{display:flex;flex-direction:column;gap:8px;}
+.feature-list-item{display:flex;align-items:center;gap:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.feature-list-item::before{content:'✓';color:var(--accent2);font-size:12px;}
+
+/* Comparison table */
+.comp-table{width:100%;max-width:900px;margin:0 auto;border-collapse:collapse;}
+.comp-table th{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;padding:14px 20px;text-align:left;border-bottom:2px solid var(--border);}
+.comp-table th:first-child{color:var(--accent);}
+.comp-table td{padding:14px 20px;border-bottom:1px solid rgba(10,45,61,0.5);font-family:'Share Tech Mono',monospace;font-size:10px;}
+.comp-table tr:hover td{background:rgba(0,212,255,0.02);}
+.comp-table td:first-child{color:var(--text);font-weight:700;}
+.check{color:var(--accent2);font-size:14px;}
+.cross{color:var(--danger);font-size:14px;}
+
+/* Mini features */
+.mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1100px;margin:0 auto;}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:20px;text-align:center;transition:all 0.2s;}
+.mini-card:hover{border-color:rgba(0,212,255,0.3);transform:scale(1.02);}
+.mini-icon{font-size:28px;margin-bottom:10px;display:block;}
+.mini-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
+.mini-desc{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;line-height:1.6;}
+
+footer{padding:40px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+.footer-brand{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:3px;}
+.footer-links{display:flex;gap:24px;}
+.footer-link{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:2px;transition:color 0.2s;}
+.footer-link:hover{color:var(--accent);}
+.reveal{opacity:0;transform:translateY(20px);transition:all 0.6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/landing" class="nav-logo">🔐 SECURECHAT</a>
+  <div class="nav-links">
+    <a href="/landing" class="nav-link">HOME</a>
+    <a href="/features" class="nav-link active">FEATURES</a>
+    <a href="/how-it-works" class="nav-link">HOW IT WORKS</a>
+    <a href="/about" class="nav-link">ABOUT</a>
+    <a href="/login" class="nav-cta">LAUNCH APP →</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="page-tag">// ALL FEATURES</span>
+  <h1 class="page-title">Every Feature<br><span>Explained</span></h1>
+  <p class="page-sub">A complete breakdown of every security feature, encryption protocol, and capability built into SecureChat.</p>
+</div>
+
+<section class="section">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// CORE SECURITY</span>
+    <h2 class="section-title">Security <span>Features</span></h2>
+  </div>
+  <div class="features-big">
+    <div class="feature-big-card blue reveal">
+      <span class="feature-big-icon">🔐</span>
+      <div class="feature-big-title">AES-256-CFB Encryption</div>
+      <p class="feature-big-desc">Every message is encrypted using AES-256 in CFB mode before it leaves your device. The same standard trusted by governments and militaries worldwide.</p>
+      <div class="feature-list">
+        <div class="feature-list-item">256-bit key length — 2²⁵⁶ possible keys</div>
+        <div class="feature-list-item">CFB mode with random IV per message</div>
+        <div class="feature-list-item">Unique session key for every conversation</div>
+        <div class="feature-list-item">Impossible to brute force with current technology</div>
+      </div>
+    </div>
+    <div class="feature-big-card green reveal">
+      <span class="feature-big-icon">🔑</span>
+      <div class="feature-big-title">RSA-2048-OAEP Key Exchange</div>
+      <p class="feature-big-desc">Public/private key pairs generated for every user. The AES session key is encrypted with the receiver's RSA public key — only their private key can decrypt it.</p>
+      <div class="feature-list">
+        <div class="feature-list-item">2048-bit RSA key pairs auto-generated</div>
+        <div class="feature-list-item">OAEP padding for enhanced security</div>
+        <div class="feature-list-item">SHA-256 hash function within OAEP</div>
+        <div class="feature-list-item">Private key never transmitted over network</div>
+      </div>
+    </div>
+    <div class="feature-big-card purple reveal">
+      <span class="feature-big-icon">🛡️</span>
+      <div class="feature-big-title">bcrypt Password Security</div>
+      <p class="feature-big-desc">Passwords are never stored in plaintext. bcrypt adaptive hashing with unique salts ensures passwords are resistant to rainbow table and brute force attacks.</p>
+      <div class="feature-list">
+        <div class="feature-list-item">bcrypt adaptive hashing algorithm</div>
+        <div class="feature-list-item">Unique random salt per password</div>
+        <div class="feature-list-item">Resistant to rainbow table attacks</div>
+        <div class="feature-list-item">Cost factor makes brute force impractical</div>
+      </div>
+    </div>
+    <div class="feature-big-card warning reveal">
+      <span class="feature-big-icon">🌐</span>
+      <div class="feature-big-title">Zero Knowledge Architecture</div>
+      <p class="feature-big-desc">The server stores only encrypted ciphertext. Even with full server access, messages cannot be read. True end-to-end encryption by mathematical design.</p>
+      <div class="feature-list">
+        <div class="feature-list-item">Server stores only ciphertext</div>
+        <div class="feature-list-item">No plaintext ever touches the server</div>
+        <div class="feature-list-item">Decryption happens client-side only</div>
+        <div class="feature-list-item">Mathematical privacy guarantee</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:rgba(5,18,24,0.5);">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// COMPARISON</span>
+    <h2 class="section-title">SecureChat <span>vs Others</span></h2>
+  </div>
+  <table class="comp-table reveal">
+    <thead>
+      <tr><th>FEATURE</th><th>SECURECHAT</th><th>REGULAR CHAT</th><th>EMAIL</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>End-to-End Encryption</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>AES-256 Message Encryption</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>RSA-2048 Key Exchange</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Zero Knowledge Server</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>bcrypt Password Hashing</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Real-time Encrypted Messages</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Self-Destruct Messages</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>Encryption Dashboard</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+      <tr><td>No Ads, No Data Selling</td><td><span class="check">✓</span></td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div style="text-align:center;margin-bottom:48px;" class="reveal">
+    <span class="section-tag">// ALL FEATURES</span>
+    <h2 class="section-title">Complete <span>Feature List</span></h2>
+  </div>
+  <div class="mini-grid">
+    <div class="mini-card reveal"><span class="mini-icon">💬</span><div class="mini-title">REAL-TIME CHAT</div><div class="mini-desc">Instant encrypted messages via Socket.IO</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">🟢</span><div class="mini-title">ONLINE STATUS</div><div class="mini-desc">See who is online in real time</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">⌨️</span><div class="mini-title">TYPING INDICATOR</div><div class="mini-desc">See when someone is typing</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">😊</span><div class="mini-title">EMOJI REACTIONS</div><div class="mini-desc">React to messages with emojis</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">📎</span><div class="mini-title">FILE SHARING</div><div class="mini-desc">Share encrypted files securely</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">🗑️</span><div class="mini-title">AUTO DELETE</div><div class="mini-desc">Messages self-destruct on demand</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">🔍</span><div class="mini-title">MESSAGE SEARCH</div><div class="mini-desc">Search through encrypted conversations</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">📊</span><div class="mini-title">DASHBOARD</div><div class="mini-desc">Live security monitoring dashboard</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">👤</span><div class="mini-title">USER PROFILES</div><div class="mini-desc">Secure account management</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">🔔</span><div class="mini-title">NOTIFICATIONS</div><div class="mini-desc">Sound and visual alerts</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">🌙</span><div class="mini-title">DARK THEME</div><div class="mini-desc">Cybersecurity-themed dark UI</div></div>
+    <div class="mini-card reveal"><span class="mini-icon">📱</span><div class="mini-title">RESPONSIVE</div><div class="mini-desc">Works on all screen sizes</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">🔐 SECURECHAT</div>
+  <div class="footer-links">
+    <a href="/landing" class="footer-link">HOME</a>
+    <a href="/about" class="footer-link">ABOUT</a>
+    <a href="/how-it-works" class="footer-link">HOW IT WORKS</a>
+    <a href="/dashboard" class="footer-link">DASHBOARD</a>
+    <a href="/login" class="footer-link">LOGIN</a>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);">AES-256 + RSA-2048</div>
+</footer>
+<script>
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>

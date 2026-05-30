@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat - Firewall Simulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020c10;--surface:#061218;--surface2:#0a1e28;--border:#0d3040;--accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;--text:#e0f0f8;--muted:#2a5060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,90,0.4)}70%{box-shadow:0 0 0 8px rgba(255,60,90,0)}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 30px currentColor}}
+@keyframes packetMove{0%{left:-20px;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% + 20px);opacity:0}}
+@keyframes firewallPulse{0%,100%{box-shadow:0 0 20px rgba(255,183,0,0.3)}50%{box-shadow:0 0 50px rgba(255,183,0,0.6)}}
+
+nav{position:sticky;top:0;z-index:100;padding:12px 28px;background:rgba(2,12,16,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;gap:14px;}
+.nav-back{padding:6px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);border-radius:6px;color:var(--accent);font-size:12px;text-decoration:none;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.nav-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;color:var(--warning);letter-spacing:3px;animation:glow 3s ease-in-out infinite;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.nav-status{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:2px;}
+.sdot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:blink 1s infinite;}
+.nav-time{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);}
+
+.page{padding:20px 28px;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;position:relative;overflow:hidden;animation:fadeIn 0.4s ease both;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc1::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.sc2::before{background:linear-gradient(90deg,transparent,var(--danger),transparent);}
+.sc3::before{background:linear-gradient(90deg,transparent,var(--warning),transparent);}
+.sc4::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.sc5::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.stat-icon{font-size:22px;margin-bottom:8px;}
+.stat-n{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;line-height:1;margin-bottom:4px;}
+.stat-l{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;}
+
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.full{grid-column:span 2;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;animation:fadeIn 0.5s ease both;}
+.card-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;}
+.cbadge{padding:2px 8px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;}
+.cb-green{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);color:var(--accent2);}
+.cb-red{background:rgba(255,60,90,0.1);border:1px solid rgba(255,60,90,0.2);color:var(--danger);}
+.card-body{padding:16px;}
+
+/* FIREWALL VIZ */
+.fw-viz{padding:24px;background:var(--surface2);position:relative;overflow:hidden;min-height:180px;}
+.fw-flow{display:flex;align-items:center;justify-content:space-between;}
+.fw-node{text-align:center;flex-shrink:0;}
+.fw-box{width:80px;height:80px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 8px;border:2px solid;}
+.fw-box.internet{background:rgba(255,60,90,0.1);border-color:rgba(255,60,90,0.3);}
+.fw-box.firewall{background:rgba(255,183,0,0.1);border-color:rgba(255,183,0,0.4);animation:firewallPulse 2s ease-in-out infinite;}
+.fw-box.server{background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);}
+.fw-box.users{background:rgba(0,255,157,0.1);border-color:rgba(0,255,157,0.3);}
+.fw-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);}
+.fw-sub{font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:2px;}
+.fw-channel{flex:1;height:60px;position:relative;display:flex;align-items:center;}
+.fw-line{position:absolute;height:2px;left:0;right:0;top:50%;}
+.fw-line.bad{background:linear-gradient(90deg,rgba(255,60,90,0.5),rgba(255,60,90,0.1));}
+.fw-line.good{background:linear-gradient(90deg,rgba(0,255,157,0.3),rgba(0,212,255,0.3));}
+.pkt{position:absolute;width:12px;height:12px;border-radius:50%;top:50%;transform:translateY(-50%);animation:packetMove 2s linear infinite;}
+.pkt.good{background:var(--accent2);box-shadow:0 0 8px var(--accent2);}
+.pkt.bad{background:var(--danger);box-shadow:0 0 8px var(--danger);}
+.fw-legend{margin-top:16px;display:flex;justify-content:center;gap:24px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+
+/* RULES */
+.rules-tbl{width:100%;border-collapse:collapse;}
+.rules-tbl th{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2);}
+.rules-tbl td{padding:10px 12px;border-bottom:1px solid rgba(13,48,64,0.5);font-size:12px;}
+.rules-tbl tr:last-child td{border-bottom:none;}
+.ra{padding:2px 10px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:700;}
+.ra-allow{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);color:var(--accent2);}
+.ra-block{background:rgba(255,60,90,0.1);border:1px solid rgba(255,60,90,0.2);color:var(--danger);}
+
+/* IP MANAGER */
+.ip-row{display:flex;gap:8px;margin-bottom:12px;}
+.ip-inp{flex:1;padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;}
+.ip-inp:focus{border-color:var(--accent);}
+.ip-inp::placeholder{color:var(--muted);}
+.btn-block{padding:9px 14px;background:rgba(255,60,90,0.1);border:1px solid rgba(255,60,90,0.3);border-radius:6px;color:var(--danger);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:1px;}
+.btn-allow{padding:9px 14px;background:rgba(0,255,157,0.08);border:1px solid rgba(0,255,157,0.2);border-radius:6px;color:var(--accent2);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:1px;}
+.ip-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
+.ip-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border:1px solid rgba(255,60,90,0.2);border-radius:6px;}
+.ip-addr{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--danger);}
+.ip-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);}
+.btn-unblock{padding:2px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;font-family:'Share Tech Mono',monospace;}
+.btn-unblock:hover{color:var(--accent2);border-color:var(--accent2);}
+
+/* REQUEST FEED */
+.req-feed{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+.req-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:4px;border:1px solid;animation:fadeIn 0.2s ease;}
+.req-item.allowed{background:rgba(0,255,157,0.03);border-color:rgba(0,255,157,0.1);}
+.req-item.blocked{background:rgba(255,60,90,0.05);border-color:rgba(255,60,90,0.15);}
+.rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rdot.allowed{background:var(--accent2);}
+.rdot.blocked{background:var(--danger);animation:pulse 1s infinite;}
+.rmeth{font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px;flex-shrink:0;}
+.rmeth.get{background:rgba(0,212,255,0.1);color:var(--accent);}
+.rmeth.post{background:rgba(0,255,157,0.1);color:var(--accent2);}
+.rmeth.blk{background:rgba(255,60,90,0.1);color:var(--danger);}
+.rpath{font-family:'Share Tech Mono',monospace;font-size:10px;flex:1;}
+.rip{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0;}
+.rtime{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);flex-shrink:0;}
+.rbadge{padding:1px 6px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:8px;flex-shrink:0;}
+.rbadge.allowed{background:rgba(0,255,157,0.1);color:var(--accent2);}
+.rbadge.blocked{background:rgba(255,60,90,0.1);color:var(--danger);}
+
+/* SIM BUTTONS */
+.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sim-btn{padding:14px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;text-align:center;transition:all 0.2s;}
+.sim-btn:hover{border-color:var(--warning);color:var(--warning);}
+.sim-btn.ok:hover{border-color:var(--accent2);color:var(--accent2);}
+.sim-sub{font-size:8px;opacity:0.5;margin-top:4px;display:block;}
+
+/* NOTIF */
+.fw-notif{position:fixed;top:80px;right:20px;padding:14px 18px;background:var(--surface);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);animation:slideIn 0.3s ease;z-index:2000;max-width:340px;border-left:3px solid var(--danger);display:flex;gap:10px;align-items:flex-start;}
+.fw-notif.ok{border-left-color:var(--accent2);}
+.ntitle{font-weight:700;font-size:13px;margin-bottom:3px;}
+.ntext{font-size:12px;color:var(--muted);}
+.ntime{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/chat" class="nav-back">← BACK</a>
+  <a href="/threat-detection" class="nav-back">🤖 THREATS</a>
+  <a href="/dashboard" class="nav-back">📊 DASHBOARD</a>
+  <div class="nav-title">🔥 FIREWALL SIMULATION</div>
+  <div class="nav-right">
+    <div class="nav-status"><div class="sdot"></div>FIREWALL ACTIVE</div>
+    <div class="nav-time" id="navTime">--:--:--</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="stats-row">
+    <div class="stat-card sc1">
+      <div class="stat-icon">✅</div>
+      <div class="stat-n" id="sAllowed" style="color:var(--accent2)">0</div>
+      <div class="stat-l">REQUESTS ALLOWED</div>
+    </div>
+    <div class="stat-card sc2">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-n" id="sBlocked" style="color:var(--danger)">0</div>
+      <div class="stat-l">REQUESTS BLOCKED</div>
+    </div>
+    <div class="stat-card sc3">
+      <div class="stat-icon">📋</div>
+      <div class="stat-n" style="color:var(--warning)">6</div>
+      <div class="stat-l">ACTIVE RULES</div>
+    </div>
+    <div class="stat-card sc4">
+      <div class="stat-icon">🌐</div>
+      <div class="stat-n" id="sIPs" style="color:var(--accent)">0</div>
+      <div class="stat-l">BLOCKED IPs</div>
+    </div>
+    <div class="stat-card sc5">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-n" style="color:var(--purple)">ON</div>
+      <div class="stat-l">FIREWALL STATUS</div>
+    </div>
+  </div>
+
+  <!-- VISUALIZER -->
+  <div class="card full" style="margin-bottom:16px;">
+    <div class="card-hdr">
+      <div class="card-title" style="color:var(--warning)">🔥 LIVE FIREWALL VISUALIZATION</div>
+      <span class="cbadge cb-green">ANIMATED</span>
+    </div>
+    <div class="fw-viz">
+      <div class="fw-flow">
+        <div class="fw-node">
+          <div class="fw-box internet">🌐</div>
+          <div class="fw-label">INTERNET</div>
+          <div class="fw-sub" style="color:var(--danger)">UNTRUSTED</div>
+        </div>
+        <div class="fw-channel">
+          <div class="fw-line bad"></div>
+          <div class="pkt bad" style="animation-duration:1.5s;animation-delay:0s;"></div>
+          <div class="pkt good" style="animation-duration:2s;animation-delay:0.8s;"></div>
+        </div>
+        <div class="fw-node">
+          <div class="fw-box firewall">🔥</div>
+          <div class="fw-label">FIREWALL</div>
+          <div class="fw-sub" style="color:var(--warning)">FILTERING</div>
+        </div>
+        <div class="fw-channel">
+          <div class="fw-line good"></div>
+          <div class="pkt good" style="animation-duration:1.8s;animation-delay:0.3s;"></div>
+        </div>
+        <div class="fw-node">
+          <div class="fw-box server">🖥️</div>
+          <div class="fw-label">SERVER</div>
+          <div class="fw-sub" style="color:var(--accent)">PROTECTED</div>
+        </div>
+        <div class="fw-channel">
+          <div class="fw-line good"></div>
+          <div class="pkt good" style="animation-duration:2.2s;animation-delay:0.5s;"></div>
+        </div>
+        <div class="fw-node">
+          <div class="fw-box users">👥</div>
+          <div class="fw-label">USERS</div>
+          <div class="fw-sub" style="color:var(--accent2)">TRUSTED</div>
+        </div>
+      </div>
+      <div class="fw-legend">
+        <span><span class="legend-dot" style="background:var(--danger);box-shadow:0 0 6px var(--danger);"></span>BLOCKED PACKET</span>
+        <span><span class="legend-dot" style="background:var(--accent2);box-shadow:0 0 6px var(--accent2);"></span>ALLOWED PACKET</span>
+        <span><span style="display:inline-block;width:20px;height:2px;background:var(--warning);vertical-align:middle;margin-right:6px;"></span>FILTERED ZONE</span>
+        <span><span style="display:inline-block;width:20px;height:2px;background:var(--accent2);vertical-align:middle;margin-right:6px;"></span>SECURE ZONE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- RULES -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" style="color:var(--accent)">📋 FIREWALL RULES</div>
+        <span class="cbadge cb-green">6 ACTIVE</span>
+      </div>
+      <div style="padding:0;">
+        <table class="rules-tbl">
+          <thead><tr><th>#</th><th>RULE NAME</th><th>TYPE</th><th>ACTION</th><th>STATUS</th></tr></thead>
+          <tbody id="rulesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- IP MANAGER -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" style="color:var(--danger)">🚫 IP ADDRESS MANAGER</div>
+        <span class="cbadge cb-red" id="ipCount">0 BLOCKED</span>
+      </div>
+      <div class="card-body">
+        <div class="ip-row">
+          <input class="ip-inp" id="ipInput" placeholder="Enter IP e.g. 192.168.1.1"/>
+          <button class="btn-block" onclick="blockIP()">BLOCK</button>
+          <button class="btn-allow" onclick="allowIP()">ALLOW</button>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">BLOCKED IP LIST</div>
+        <div class="ip-list" id="blockedIPs">
+          <div style="text-align:center;padding:16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">No IPs blocked yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REQUEST MONITOR -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" style="color:var(--accent2)">📡 REQUEST MONITOR</div>
+        <span class="cbadge cb-green">LIVE</span>
+      </div>
+      <div style="padding:8px;">
+        <div class="req-feed" id="reqFeed">
+          <div style="padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">Monitoring requests...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMULATE -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title" style="color:var(--warning)">🧪 SIMULATE TRAFFIC</div>
+        <span class="cbadge cb-green">DEMO</span>
+      </div>
+      <div class="card-body">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;letter-spacing:1px;">CLICK TO SIMULATE NETWORK TRAFFIC SCENARIOS</div>
+        <div class="sim-grid">
+          <div class="sim-btn" onclick="simReq('sql')">💉 SQL INJECT<span class="sim-sub">Malicious query</span></div>
+          <div class="sim-btn" onclick="simReq('xss')">📜 XSS ATTACK<span class="sim-sub">Script injection</span></div>
+          <div class="sim-btn" onclick="simReq('port')">🔍 PORT SCAN<span class="sim-sub">Recon attempt</span></div>
+          <div class="sim-btn" onclick="simReq('ddos')">🌊 DDoS SIM<span class="sim-sub">Flood attack</span></div>
+          <div class="sim-btn" onclick="simReq('badip')">🚫 BLOCKED IP<span class="sim-sub">Known bad actor</span></div>
+          <div class="sim-btn ok" onclick="simReq('normal')">✅ NORMAL<span class="sim-sub">Clean request</span></div>
+          <div class="sim-btn ok" onclick="simReq('login')">🔐 SECURE LOGIN<span class="sim-sub">Auth request</span></div>
+          <div class="sim-btn ok" onclick="simReq('chat')">💬 CHAT MSG<span class="sim-sub">Encrypted msg</span></div>
+          <div class="sim-btn" onclick="simReq('brute')">🔨 BRUTE FORCE<span class="sim-sub">Password attack</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIREWALL LOG -->
+    <div class="card full">
+      <div class="card-hdr">
+        <div class="card-title" style="color:var(--purple)">📋 FIREWALL EVENT LOG</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="clearAll()" style="padding:4px 12px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;">CLEAR</button>
+          <span class="cbadge cb-green">LIVE</span>
+        </div>
+      </div>
+      <div style="padding:8px;">
+        <div class="req-feed" id="fwLog" style="max-height:220px;">
+          <div style="padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">No events logged yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var allowedCnt = 0;
+var blockedCnt = 0;
+var blockedIPList = [];
+
+var fwRules = [
+  {id:1, name:'BLOCK SQL INJECTION', type:'CONTENT', action:'BLOCK', on:true},
+  {id:2, name:'BLOCK XSS ATTEMPTS', type:'CONTENT', action:'BLOCK', on:true},
+  {id:3, name:'RATE LIMIT REQUESTS', type:'RATE', action:'BLOCK', on:true},
+  {id:4, name:'ALLOW HTTPS TRAFFIC', type:'PROTOCOL', action:'ALLOW', on:true},
+  {id:5, name:'BLOCK PORT SCANNING', type:'BEHAVIOR', action:'BLOCK', on:true},
+  {id:6, name:'ALLOW AUTH ENDPOINTS', type:'ENDPOINT', action:'ALLOW', on:true}
+];
+
+var simScenarios = {
+  sql:   {method:'POST', path:'/api/send',     ip:'45.33.32.156',   reason:'SQL INJECTION DETECTED',      blocked:true,  detail:'SELECT UNION DROP pattern in body'},
+  xss:   {method:'POST', path:'/api/register', ip:'198.51.100.42',  reason:'XSS SCRIPT TAG DETECTED',     blocked:true,  detail:'Script tag with cookie payload'},
+  port:  {method:'GET',  path:'/admin/config', ip:'104.21.67.89',   reason:'PORT SCAN RECON DETECTED',    blocked:true,  detail:'Scanning ports 80 443 8080 8443'},
+  ddos:  {method:'GET',  path:'/api/users',    ip:'185.220.101.5',  reason:'RATE LIMIT EXCEEDED DDoS',    blocked:true,  detail:'500+ requests in 10 seconds'},
+  badip: {method:'GET',  path:'/',             ip:'192.168.100.99', reason:'IP IN BLACKLIST',              blocked:true,  detail:'Known malicious IP address'},
+  normal:{method:'GET',  path:'/chat',         ip:'10.0.0.5',       reason:'CLEAN REQUEST',               blocked:false, detail:'Normal user browsing activity'},
+  login: {method:'POST', path:'/api/login',    ip:'10.0.0.12',      reason:'AUTH REQUEST VERIFIED',       blocked:false, detail:'bcrypt auth with session token'},
+  chat:  {method:'POST', path:'/api/send',     ip:'10.0.0.8',       reason:'ENCRYPTED MESSAGE',           blocked:false, detail:'AES-256 encrypted payload'},
+  brute: {method:'POST', path:'/api/login',    ip:'91.108.4.201',   reason:'BRUTE FORCE DETECTED',        blocked:true,  detail:'15 failed login attempts in 5 min'}
+};
+
+function updateClock() {
+  document.getElementById('navTime').textContent = new Date().toLocaleTimeString('en-US', {hour12:false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function nowTime() {
+  return new Date().toLocaleTimeString('en-US', {hour12:false});
+}
+
+function renderRules() {
+  var tb = document.getElementById('rulesBody');
+  var h = '';
+  for (var i = 0; i < fwRules.length; i++) {
+    var r = fwRules[i];
+    var cls = r.action === 'ALLOW' ? 'ra-allow' : 'ra-block';
+    var sc = r.on ? 'color:var(--accent2)' : 'color:var(--muted)';
+    h += '<tr><td style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--muted)">' + r.id + '</td>';
+    h += '<td style="font-family:Share Tech Mono,monospace;font-size:10px">' + r.name + '</td>';
+    h += '<td style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--accent)">' + r.type + '</td>';
+    h += '<td><span class="ra ' + cls + '">' + r.action + '</span></td>';
+    h += '<td><span style="font-family:Share Tech Mono,monospace;font-size:9px;' + sc + '">' + (r.on ? 'ON' : 'OFF') + '</span></td></tr>';
+  }
+  tb.innerHTML = h;
+}
+
+function blockIP() {
+  var ip = document.getElementById('ipInput').value.trim();
+  if (!ip) return;
+  if (blockedIPList.indexOf(ip) !== -1) { showNotif('Already Blocked', ip + ' is already blacklisted', true); return; }
+  blockedIPList.push(ip);
+  document.getElementById('ipInput').value = '';
+  document.getElementById('sIPs').textContent = blockedIPList.length;
+  document.getElementById('ipCount').textContent = blockedIPList.length + ' BLOCKED';
+  renderIPs();
+  addToLog('BLOCK', 'ALL', ip, '/ALL', 'Manually blocked by admin', true);
+  showNotif('IP Blocked', ip + ' added to firewall blacklist', true);
+}
+
+function allowIP() {
+  var ip = document.getElementById('ipInput').value.trim();
+  if (!ip) return;
+  var idx = blockedIPList.indexOf(ip);
+  if (idx !== -1) {
+    blockedIPList.splice(idx, 1);
+    document.getElementById('sIPs').textContent = blockedIPList.length;
+    document.getElementById('ipCount').textContent = blockedIPList.length + ' BLOCKED';
+    renderIPs();
+    showNotif('IP Allowed', ip + ' removed from blacklist', false);
+  }
+  document.getElementById('ipInput').value = '';
+}
+
+function unblockIP(ip) {
+  var idx = blockedIPList.indexOf(ip);
+  if (idx !== -1) {
+    blockedIPList.splice(idx, 1);
+    document.getElementById('sIPs').textContent = blockedIPList.length;
+    document.getElementById('ipCount').textContent = blockedIPList.length + ' BLOCKED';
+    renderIPs();
+    showNotif('IP Unblocked', ip + ' removed from blacklist', false);
+  }
+}
+
+function renderIPs() {
+  var c = document.getElementById('blockedIPs');
+  if (!blockedIPList.length) {
+    c.innerHTML = '<div style="text-align:center;padding:16px;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted)">No IPs blocked yet</div>';
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < blockedIPList.length; i++) {
+    h += '<div class="ip-item">';
+    h += '<div><div class="ip-addr">' + blockedIPList[i] + '</div>';
+    h += '<div class="ip-meta">Blocked at ' + nowTime() + '</div></div>';
+    h += '<button class="btn-unblock" onclick="unblockIP(\'' + blockedIPList[i] + '\')">UNBLOCK</button>';
+    h += '</div>';
+  }
+  c.innerHTML = h;
+}
+
+function simReq(type) {
+  var d = simScenarios[type];
+  if (!d) return;
+  if (d.blocked) {
+    blockedCnt++;
+    document.getElementById('sBlocked').textContent = blockedCnt;
+  } else {
+    allowedCnt++;
+    document.getElementById('sAllowed').textContent = allowedCnt;
+  }
+  addToReqFeed(d.method, d.path, d.ip, d.reason, d.blocked);
+  addToLog(d.blocked ? 'BLOCK' : 'ALLOW', d.method, d.ip, d.path, d.detail, d.blocked);
+  showNotif(d.blocked ? 'REQUEST BLOCKED' : 'REQUEST ALLOWED', d.reason + ' from ' + d.ip, d.blocked);
+}
+
+function addToReqFeed(method, path, ip, reason, blocked) {
+  var feed = document.getElementById('reqFeed');
+  var empty = feed.querySelector('div');
+  if (empty && empty.textContent.indexOf('Monitoring') !== -1) feed.innerHTML = '';
+  var cls = blocked ? 'blocked' : 'allowed';
+  var mc = blocked ? 'blk' : (method === 'GET' ? 'get' : 'post');
+  var el = document.createElement('div');
+  el.className = 'req-item ' + cls;
+  el.innerHTML = '<div class="rdot ' + cls + '"></div>' +
+    '<span class="rmeth ' + mc + '">' + method + '</span>' +
+    '<span class="rpath">' + path + '</span>' +
+    '<span class="rip">' + ip + '</span>' +
+    '<span class="rtime">' + nowTime() + '</span>' +
+    '<span class="rbadge ' + cls + '">' + (blocked ? 'BLOCKED' : 'ALLOWED') + '</span>';
+  feed.insertBefore(el, feed.firstChild);
+  if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+}
+
+function addToLog(action, method, ip, path, detail, blocked) {
+  var log = document.getElementById('fwLog');
+  var empty = log.querySelector('div');
+  if (empty && empty.textContent.indexOf('No events') !== -1) log.innerHTML = '';
+  var color = blocked ? 'var(--danger)' : 'var(--accent2)';
+  var icon = blocked ? '🚫' : '✅';
+  var el = document.createElement('div');
+  el.className = 'req-item ' + (blocked ? 'blocked' : 'allowed');
+  el.style.marginBottom = '4px';
+  el.innerHTML = '<span style="font-size:12px">' + icon + '</span>' +
+    '<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:' + color + ';letter-spacing:1px;flex-shrink:0">' + action + '</span>' +
+    '<span style="font-family:Share Tech Mono,monospace;font-size:10px;flex:1">' + method + ' ' + path + ' from ' + ip + '</span>' +
+    '<span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted)">' + detail.slice(0,35) + '</span>' +
+    '<span style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--muted);flex-shrink:0">' + nowTime() + '</span>';
+  log.insertBefore(el, log.firstChild);
+  if (log.children.length > 30) log.removeChild(log.lastChild);
+}
+
+function clearAll() {
+  document.getElementById('fwLog').innerHTML = '<div style="padding:16px;text-align:center;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted)">No events logged yet</div>';
+  document.getElementById('reqFeed').innerHTML = '<div style="padding:16px;text-align:center;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted)">Monitoring requests...</div>';
+  allowedCnt = 0; blockedCnt = 0;
+  document.getElementById('sAllowed').textContent = '0';
+  document.getElementById('sBlocked').textContent = '0';
+}
+
+function showNotif(title, text, isBlock) {
+  var n = document.createElement('div');
+  n.className = 'fw-notif' + (isBlock ? '' : ' ok');
+  var icon = isBlock ? '🚫' : '✅';
+  var color = isBlock ? 'var(--danger)' : 'var(--accent2)';
+  n.innerHTML = '<div style="font-size:18px;flex-shrink:0">' + icon + '</div>' +
+    '<div><div class="ntitle" style="color:' + color + '">' + title + '</div>' +
+    '<div class="ntext">' + text + '</div>' +
+    '<div class="ntime">' + nowTime() + '</div></div>';
+  document.body.appendChild(n);
+  setTimeout(function() { n.style.opacity='0'; n.style.transform='translateX(20px)'; n.style.transition='all 0.4s'; }, 3500);
+  setTimeout(function() { n.remove(); }, 4000);
+}
+
+// Auto simulate traffic every 3 seconds
+var autoTypes = ['normal','normal','chat','login','sql','normal','chat','ddos','normal','xss'];
+var autoIdx = 0;
+function autoSim() {
+  simReq(autoTypes[autoIdx % autoTypes.length]);
+  autoIdx++;
+}
+
+// Real traffic from server
+var realSocket = io();
+realSocket.on('real_request', function(data) {
+  var blocked = data.path.indexOf('admin') !== -1 ||
+                data.path.indexOf('config') !== -1;
+  addToReqFeed(data.method, data.path, data.ip,
+    blocked ? 'SUSPICIOUS PATH' : 'REAL REQUEST', blocked);
+  if (blocked) {
+    blockedCnt++;
+    document.getElementById('sBlocked').textContent = blockedCnt;
+  } else {
+    allowedCnt++;
+    document.getElementById('sAllowed').textContent = allowedCnt;
+  }
+  showNotif(
+    blocked ? 'REAL THREAT DETECTED' : 'REAL REQUEST',
+    data.method + ' ' + data.path + ' from ' + data.ip,
+    blocked
+  );
+});
+
+
+
+
+renderRules();
+setInterval(autoSim, 3000);
+</script>
+</body>
+</html>

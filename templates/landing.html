@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — Military-Grade Encrypted Messaging</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#020c10;--surface:#051218;--border:#0a2d3d;
+  --accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;
+  --text:#c8e8f0;--muted:#2a5060;--dim:#0d1f26;
+  --glow:0 0 30px rgba(0,212,255,0.4);--glow2:0 0 30px rgba(0,255,157,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow-x:hidden;cursor:none;}
+
+/* Custom cursor */
+.cursor{position:fixed;width:20px;height:20px;border:1px solid var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transition:transform 0.1s;transform:translate(-50%,-50%);}
+.cursor-dot{position:fixed;width:4px;height:4px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+
+/* Grid bg */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.025) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;z-index:0;}
+
+/* Scanline */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:1;animation:scanMove 8s linear infinite;}
+@keyframes scanMove{0%{background-position:0 0}100%{background-position:0 100px}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,212,255,0.1);background:rgba(2,12,16,0.9);backdrop-filter:blur(10px);}
+.nav-logo{display:flex;align-items:center;gap:12px;}
+.nav-logo svg{width:32px;height:32px;filter:drop-shadow(0 0 8px var(--accent));animation:logoPulse 2s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 8px var(--accent))}50%{filter:drop-shadow(0 0 20px var(--accent)) drop-shadow(0 0 40px var(--accent2))}}
+.nav-brand{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+.nav-links{display:flex;align-items:center;gap:32px;}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;text-decoration:none;text-transform:uppercase;transition:color 0.2s;cursor:none;}
+.nav-link:hover{color:var(--accent);}
+.nav-cta{padding:8px 20px;border:1px solid var(--accent);color:var(--accent);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all 0.2s;cursor:none;}
+.nav-cta:hover{background:var(--accent);color:#000;box-shadow:var(--glow);}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:2;}
+.hero-content{text-align:center;z-index:10;position:relative;padding:0 20px;max-width:900px;}
+
+/* Rotating ring */
+.hero-ring{position:absolute;width:700px;height:700px;border-radius:50%;border:1px solid rgba(0,212,255,0.08);top:50%;left:50%;transform:translate(-50%,-50%);animation:ringRotate 30s linear infinite;}
+.hero-ring2{position:absolute;width:500px;height:500px;border-radius:50%;border:1px solid rgba(0,255,157,0.06);top:50%;left:50%;transform:translate(-50%,-50%);animation:ringRotate 20s linear infinite reverse;}
+.hero-ring3{position:absolute;width:900px;height:900px;border-radius:50%;border:1px solid rgba(0,212,255,0.04);top:50%;left:50%;transform:translate(-50%,-50%);animation:ringRotate 45s linear infinite;}
+@keyframes ringRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Ring dots */
+.ring-dot{position:absolute;width:6px;height:6px;background:var(--accent);border-radius:50%;top:0;left:50%;margin-left:-3px;box-shadow:0 0 10px var(--accent);}
+
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid rgba(0,255,157,0.3);border-radius:20px;background:rgba(0,255,157,0.05);font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:2px;margin-bottom:32px;animation:fadeUp 0.6s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.badge-dot{width:6px;height:6px;background:var(--accent2);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.hero-title{font-family:'Orbitron',sans-serif;font-size:72px;font-weight:900;line-height:1.1;letter-spacing:-2px;margin-bottom:24px;animation:fadeUp 0.6s ease 0.1s both;}
+.hero-title .line1{display:block;color:var(--text);}
+.hero-title .line2{display:block;color:var(--accent);text-shadow:0 0 40px rgba(0,212,255,0.5);}
+
+.hero-sub{font-size:18px;color:var(--muted);line-height:1.7;max-width:600px;margin:0 auto 40px;animation:fadeUp 0.6s ease 0.2s both;font-weight:300;letter-spacing:1px;}
+
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.6s ease 0.3s both;}
+.btn-primary{padding:16px 40px;background:var(--accent);color:#000;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;border:none;border-radius:3px;cursor:none;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.btn-primary:hover{box-shadow:var(--glow);transform:translateY(-2px);}
+.btn-secondary{padding:16px 40px;background:transparent;color:var(--accent);font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;border:1px solid var(--accent);border-radius:3px;cursor:none;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.btn-secondary:hover{background:rgba(0,212,255,0.1);box-shadow:var(--glow);transform:translateY(-2px);}
+
+/* Floating stats */
+.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;animation:fadeUp 0.6s ease 0.4s both;}
+.hstat{text-align:center;}
+.hstat-num{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;color:var(--accent);display:block;}
+.hstat-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:4px;}
+
+/* Scroll indicator */
+.scroll-ind{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeUp 0.6s ease 0.6s both;}
+.scroll-line{width:1px;height:60px;background:linear-gradient(to bottom,var(--accent),transparent);animation:scrollPulse 2s ease-in-out infinite;}
+@keyframes scrollPulse{0%,100%{opacity:0.3;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.2)}}
+.scroll-text{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:3px;}
+
+/* FEATURES SECTION */
+.section{position:relative;z-index:2;padding:100px 60px;}
+.section-header{text-align:center;margin-bottom:70px;}
+.section-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;display:block;}
+.section-title{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:700;color:var(--text);letter-spacing:2px;line-height:1.2;}
+.section-title span{color:var(--accent);}
+
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1100px;margin:0 auto;}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:32px;position:relative;overflow:hidden;transition:all 0.3s;cursor:none;}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity 0.3s;}
+.feature-card:hover::before{opacity:1;}
+.feature-card:hover{border-color:rgba(0,212,255,0.3);transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.4);}
+.feature-icon{font-size:36px;margin-bottom:20px;display:block;}
+.feature-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;}
+.feature-desc{font-size:14px;color:var(--muted);line-height:1.7;font-weight:300;}
+.feature-tag{position:absolute;top:16px;right:16px;padding:3px 10px;background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--accent2);letter-spacing:1px;}
+
+/* HOW IT WORKS */
+.how-section{position:relative;z-index:2;padding:100px 60px;background:linear-gradient(180deg,transparent,var(--dim),transparent);}
+.steps{display:flex;gap:0;max-width:1000px;margin:0 auto;position:relative;}
+.steps::before{content:'';position:absolute;top:40px;left:60px;right:60px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent),transparent);z-index:0;}
+.step{flex:1;text-align:center;position:relative;z-index:1;}
+.step-num{width:80px;height:80px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--accent);position:relative;transition:all 0.3s;}
+.step-num::before{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(0,212,255,0.2);animation:stepPulse 2s ease-in-out infinite;}
+@keyframes stepPulse{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.1);opacity:1}}
+.step:nth-child(2) .step-num{border-color:var(--accent2);color:var(--accent2);}
+.step:nth-child(3) .step-num{border-color:var(--warning);color:var(--warning);}
+.step:nth-child(4) .step-num{border-color:var(--danger);color:var(--danger);}
+.step-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--text);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+.step-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);line-height:1.8;padding:0 10px;}
+
+/* ENCRYPTION VISUAL */
+.enc-visual{max-width:900px;margin:60px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:32px;font-family:'Share Tech Mono',monospace;}
+.enc-flow{display:flex;align-items:center;gap:0;overflow-x:auto;}
+.enc-box{flex-shrink:0;padding:16px 20px;background:var(--dim);border:1px solid var(--border);border-radius:3px;text-align:center;}
+.enc-box .label{font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;}
+.enc-box .val{font-size:10px;word-break:break-all;max-width:140px;}
+.enc-box .val.green{color:var(--accent2);}
+.enc-box .val.red{color:var(--warning);}
+.enc-box .val.blue{color:var(--accent);}
+.enc-arrow{padding:0 12px;color:var(--accent);font-size:18px;flex-shrink:0;}
+
+/* SECURITY SECTION */
+.security-section{position:relative;z-index:2;padding:100px 60px;}
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;margin:0 auto;}
+.sec-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:24px;display:flex;gap:16px;align-items:flex-start;transition:all 0.3s;}
+.sec-card:hover{border-color:rgba(0,212,255,0.3);transform:translateX(4px);}
+.sec-icon{font-size:28px;flex-shrink:0;}
+.sec-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
+.sec-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+
+/* CTA SECTION */
+.cta-section{position:relative;z-index:2;padding:120px 60px;text-align:center;}
+.cta-box{max-width:700px;margin:0 auto;background:var(--surface);border:1px solid rgba(0,212,255,0.2);border-radius:4px;padding:60px 40px;position:relative;overflow:hidden;}
+.cta-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,212,255,0.05),transparent 70%);pointer-events:none;}
+.cta-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--text);margin-bottom:16px;letter-spacing:2px;}
+.cta-title span{color:var(--accent);}
+.cta-sub{font-size:16px;color:var(--muted);margin-bottom:36px;font-weight:300;}
+
+/* FOOTER */
+footer{position:relative;z-index:2;padding:40px 60px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.footer-brand{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:3px;}
+.footer-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;}
+.footer-badges{display:flex;gap:10px;}
+.footer-badge{padding:4px 12px;border:1px solid var(--border);border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;}
+
+/* Particles */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1;}
+.particle{position:absolute;width:2px;height:2px;background:var(--accent);border-radius:50%;animation:particleFloat linear infinite;opacity:0;}
+@keyframes particleFloat{0%{transform:translateY(100vh);opacity:0}10%{opacity:0.5}90%{opacity:0.5}100%{transform:translateY(-50px);opacity:0}}
+
+/* Animations on scroll */
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="14" width="20" height="14" rx="2" stroke="#00d4ff" stroke-width="1.5"/>
+      <path d="M10 14V10C10 6.686 12.686 4 16 4C19.314 4 22 6.686 22 10V14" stroke="#00d4ff" stroke-width="1.5"/>
+      <circle cx="16" cy="21" r="2.5" fill="#00d4ff"/>
+      <line x1="16" y1="23.5" x2="16" y2="26" stroke="#00d4ff" stroke-width="1.5"/>
+    </svg>
+    <span class="nav-brand">SecureChat</span>
+  </div>
+  <div class="nav-links">
+    <a href="/features" class="nav-link">FEATURES</a>
+    <a href="/how-it-works" class="nav-link">HOW IT WORKS</a>
+    <a href="/about" class="nav-link">ABOUT</a>
+    <a href="/login" class="nav-cta">Launch App →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-ring"><div class="ring-dot"></div></div>
+  <div class="hero-ring2"></div>
+  <div class="hero-ring3"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      MILITARY-GRADE ENCRYPTION ACTIVE
+    </div>
+    <h1 class="hero-title">
+      <span class="line1">COMMUNICATE</span>
+      <span class="line2">WITHOUT FEAR</span>
+    </h1>
+    <p class="hero-sub">End-to-end encrypted messaging powered by AES-256 and RSA-2048. Your messages are mathematically impossible to intercept.</p>
+    <div class="hero-btns">
+      <a href="/login" class="btn-primary">GET STARTED FREE →</a>
+      <a href="#how" class="btn-secondary">HOW IT WORKS</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><span class="hstat-num">256</span><div class="hstat-label">AES KEY BITS</div></div>
+      <div class="hstat"><span class="hstat-num">2048</span><div class="hstat-label">RSA KEY BITS</div></div>
+      <div class="hstat"><span class="hstat-num">0</span><div class="hstat-label">DATA SOLD</div></div>
+      <div class="hstat"><span class="hstat-num">∞</span><div class="hstat-label">PRIVACY</div></div>
+    </div>
+  </div>
+  <div class="scroll-ind">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">SCROLL DOWN</span>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-header reveal">
+    <span class="section-tag">// FEATURES</span>
+    <h2 class="section-title">Everything You Need for <span>Secure</span> Communication</h2>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <span class="feature-icon">🔐</span>
+      <div class="feature-tag">CORE</div>
+      <div class="feature-title">AES-256 Encryption</div>
+      <p class="feature-desc">Every message encrypted with military-grade AES-256-CFB. The same standard used by governments worldwide.</p>
+    </div>
+    <div class="feature-card reveal">
+      <span class="feature-icon">🔑</span>
+      <div class="feature-tag">CORE</div>
+      <div class="feature-title">RSA-2048 Key Exchange</div>
+      <p class="feature-desc">Unique RSA-2048 key pair generated for every user. Your private key never leaves your account.</p>
+    </div>
+    <div class="feature-card reveal">
+      <span class="feature-icon">💬</span>
+      <div class="feature-tag">CHAT</div>
+      <div class="feature-title">Real-Time Messaging</div>
+      <p class="feature-desc">Instant encrypted messages via Socket.IO. See online status, typing indicators and read receipts.</p>
+    </div>
+    <div class="feature-card reveal">
+      <span class="feature-icon">📎</span>
+      <div class="feature-tag">FILES</div>
+      <div class="feature-title">Encrypted File Sharing</div>
+      <p class="feature-desc">Share files securely. All attachments are encrypted before transmission — zero plaintext storage.</p>
+    </div>
+    <div class="feature-card reveal">
+      <span class="feature-icon">🗑️</span>
+      <div class="feature-tag">PRIVACY</div>
+      <div class="feature-title">Self-Destruct Messages</div>
+      <p class="feature-desc">Set messages to auto-delete after reading. No digital footprint, no trace left behind.</p>
+    </div>
+    <div class="feature-card reveal">
+      <span class="feature-icon">📊</span>
+      <div class="feature-tag">MONITOR</div>
+      <div class="feature-title">Encryption Dashboard</div>
+      <p class="feature-desc">Live visualization of encryption activity. See every algorithm working in real-time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="section-header reveal">
+    <span class="section-tag">// PROTOCOL</span>
+    <h2 class="section-title">How <span>Encryption</span> Works</h2>
+  </div>
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Register</div>
+      <div class="step-desc">RSA-2048 key pair auto-generated. Public key shared. Private key stays secret.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Encrypt</div>
+      <div class="step-desc">AES-256 session key encrypts your message. RSA wraps the session key.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Transmit</div>
+      <div class="step-desc">Only ciphertext travels through the server. Zero plaintext. Zero knowledge.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Decrypt</div>
+      <div class="step-desc">Receiver's private key unwraps AES key. Message decrypted locally. Only receiver can read.</div>
+    </div>
+  </div>
+
+  <!-- Encryption flow visual -->
+  <div class="enc-visual reveal">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:20px;">LIVE ENCRYPTION FLOW</div>
+    <div class="enc-flow">
+      <div class="enc-box"><div class="label">PLAINTEXT</div><div class="val green" id="plainText">Hello!</div></div>
+      <div class="enc-arrow">→</div>
+      <div class="enc-box"><div class="label">AES-256 KEY</div><div class="val blue" id="aesKey">K9mX2...</div></div>
+      <div class="enc-arrow">→</div>
+      <div class="enc-box"><div class="label">CIPHERTEXT</div><div class="val red" id="cipherText">gX9kL2mN...</div></div>
+      <div class="enc-arrow">→</div>
+      <div class="enc-box"><div class="label">RSA WRAPPED</div><div class="val blue" id="rsaText">MIIBIj...</div></div>
+      <div class="enc-arrow">→</div>
+      <div class="enc-box"><div class="label">DECRYPTED</div><div class="val green" id="decryptText">Hello!</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="security-section" id="security">
+  <div class="section-header reveal">
+    <span class="section-tag">// SECURITY</span>
+    <h2 class="section-title">Built on <span>Proven</span> Standards</h2>
+  </div>
+  <div class="security-grid">
+    <div class="sec-card reveal"><span class="sec-icon">🛡️</span><div><div class="sec-title">AES-256-CFB</div><p class="sec-desc">Symmetric encryption used by NSA for Top Secret data. 2²⁵⁶ possible keys — unbreakable by brute force.</p></div></div>
+    <div class="sec-card reveal"><span class="sec-icon">🔒</span><div><div class="sec-title">RSA-2048-OAEP</div><p class="sec-desc">Asymmetric key exchange. Breaking RSA-2048 would take longer than the age of the universe.</p></div></div>
+    <div class="sec-card reveal"><span class="sec-icon">🔑</span><div><div class="sec-title">bcrypt Password Hashing</div><p class="sec-desc">Passwords hashed with bcrypt — adaptive, salted, resistant to rainbow table and brute force attacks.</p></div></div>
+    <div class="sec-card reveal"><span class="sec-icon">⚡</span><div><div class="sec-title">Zero Knowledge Server</div><p class="sec-desc">Our server stores only ciphertext. Even we cannot read your messages. True end-to-end encryption.</p></div></div>
+    <div class="sec-card reveal"><span class="sec-icon">🌐</span><div><div class="sec-title">Secure WebSockets</div><p class="sec-desc">Real-time communication over encrypted Socket.IO channels. No message interception possible.</p></div></div>
+    <div class="sec-card reveal"><span class="sec-icon">🔐</span><div><div class="sec-title">SHA-256 Integrity</div><p class="sec-desc">SHA-256 used within RSA-OAEP for message integrity verification. Tamper-proof transmission.</p></div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box reveal">
+    <div class="cta-title">Start Chatting <span>Securely</span></div>
+    <p class="cta-sub">Free forever. No ads. No data selling. Just secure communication.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="/" class="btn-primary">LAUNCH SECURECHAT →</a>
+      <a href="#features" class="btn-secondary">LEARN MORE</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">SECURECHAT</div>
+  <div class="footer-text">© 2026 SECURECHAT — ALL COMMUNICATIONS ENCRYPTED</div>
+  <div class="footer-badges">
+    <div class="footer-badge">AES-256</div>
+    <div class="footer-badge">RSA-2048</div>
+    <div class="footer-badge">E2E</div>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor=document.getElementById('cursor');
+const dot=document.getElementById('cursorDot');
+document.addEventListener('mousemove',e=>{
+  cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px';
+  dot.style.left=e.clientX+'px'; dot.style.top=e.clientY+'px';
+});
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cursor.style.transform='translate(-50%,-50%) scale(2)');
+  el.addEventListener('mouseleave',()=>cursor.style.transform='translate(-50%,-50%) scale(1)');
+});
+
+// Particles
+const pc=document.getElementById('particles');
+for(let i=0;i<30;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(10+Math.random()*15)+'s';
+  p.style.animationDelay=(Math.random()*10)+'s';
+  p.style.width=p.style.height=(Math.random()>0.7?3:2)+'px';
+  p.style.background=Math.random()>0.5?'var(--accent)':'var(--accent2)';
+  pc.appendChild(p);
+}
+
+// Scroll reveal
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Animated encryption flow
+const msgs=['Hello!','Hi there!','Secret msg','Test 123','Secure!'];
+const ciphers=['gX9kL2mN8pQ','zR4sT7uV1wX','aB3cD6eF9gH','jK2lM5nO8pQ','xY1zA4bC7dE'];
+const keys=['K9mX2pL8qR','aE3fG7hI1jK','bL2mN5oP8qR','cS4tU7vW0xY','dZ1aB4cD7eF'];
+const rsas=['MIIBIjAN','MIIBCGAA','MIIBDwAA','MIIBEgAA','MIIBFwAA'];
+let idx=0;
+setInterval(()=>{
+  idx=(idx+1)%msgs.length;
+  document.getElementById('plainText').textContent=msgs[idx];
+  document.getElementById('aesKey').textContent=keys[idx]+'...';
+  document.getElementById('cipherText').textContent=ciphers[idx]+'...';
+  document.getElementById('rsaText').textContent=rsas[idx]+'...';
+  document.getElementById('decryptText').textContent=msgs[idx];
+},2000);
+</script>
+</body>
+</html>

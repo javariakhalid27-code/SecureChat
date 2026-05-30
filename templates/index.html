@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#020c10;--surface:#051218;--surface2:#071a24;
+  --border:#0a2d3d;--accent:#00d4ff;--accent2:#00ff9d;
+  --danger:#ff3c5a;--warning:#ffb700;--text:#c8e8f0;--muted:#2a5060;
+  --glow:0 0 30px rgba(0,212,255,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;overflow:hidden;cursor:none;}
+
+/* Cursor */
+.cursor{position:fixed;width:18px;height:18px;border:1px solid var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s;}
+.cursor-dot{position:fixed;width:3px;height:3px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+
+/* Grid */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+
+/* LEFT PANEL */
+.left-panel{width:55%;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;overflow:hidden;}
+.left-panel::after{content:'';position:absolute;right:0;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--accent),transparent);}
+
+/* Animated lock */
+.lock-wrapper{position:relative;margin-bottom:48px;}
+.lock-rings{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.ring{position:absolute;border-radius:50%;border:1px solid;transform:translate(-50%,-50%);top:0;left:0;}
+.ring1{width:180px;height:180px;border-color:rgba(0,212,255,0.15);animation:spin1 20s linear infinite;}
+.ring2{width:240px;height:240px;border-color:rgba(0,255,157,0.08);animation:spin1 30s linear infinite reverse;}
+.ring3{width:300px;height:300px;border-color:rgba(0,212,255,0.05);animation:spin1 45s linear infinite;}
+@keyframes spin1{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.ring-dot{position:absolute;width:5px;height:5px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent);top:-2.5px;left:50%;margin-left:-2.5px;}
+.ring2-dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2);}
+
+.lock-svg{position:relative;z-index:2;filter:drop-shadow(0 0 20px rgba(0,212,255,0.5));animation:lockPulse 3s ease-in-out infinite;}
+@keyframes lockPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(0,212,255,0.5))}50%{filter:drop-shadow(0 0 40px rgba(0,212,255,0.8)) drop-shadow(0 0 60px rgba(0,255,157,0.3))}}
+
+.left-title{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:900;color:var(--text);letter-spacing:2px;text-align:center;line-height:1.2;margin-bottom:16px;}
+.left-title span{color:var(--accent);}
+.left-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:3px;text-align:center;margin-bottom:48px;}
+
+/* Security badges */
+.badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:48px;}
+.badge{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border);border-radius:2px;background:var(--surface);font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;transition:all 0.3s;}
+.badge:hover{border-color:var(--accent);color:var(--accent);}
+.badge-dot{width:5px;height:5px;background:var(--accent2);border-radius:50%;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* Terminal text */
+.terminal{background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:3px;padding:16px 20px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);line-height:2;width:100%;max-width:400px;}
+.terminal .t-line{display:flex;gap:8px;}
+.terminal .t-prompt{color:var(--accent2);}
+.terminal .t-cmd{color:var(--text);}
+.terminal .t-out{color:var(--accent);padding-left:16px;}
+
+/* RIGHT PANEL */
+.right-panel{width:45%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 50px;position:relative;}
+
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:40px;}
+.brand-icon svg{width:28px;height:28px;filter:drop-shadow(0 0 8px var(--accent));}
+.brand-name{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;}
+
+/* Tabs */
+.tabs{display:flex;margin-bottom:32px;border-bottom:1px solid var(--border);width:100%;max-width:380px;}
+.tab{flex:1;padding:12px;text-align:center;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;cursor:none;color:var(--muted);border-bottom:2px solid transparent;transition:all 0.2s;background:transparent;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--text);}
+
+/* Form */
+.form-wrap{width:100%;max-width:380px;}
+.form-panel{display:none;}
+.form-panel.active{display:block;}
+
+.field{margin-bottom:20px;}
+.field-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.field-wrap{position:relative;}
+.field-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+.field input{width:100%;padding:13px 14px 13px 42px;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:all 0.2s;}
+.field input:focus{border-color:var(--accent);box-shadow:var(--glow);background:rgba(0,212,255,0.03);}
+.field input::placeholder{color:var(--muted);}
+.field input:focus+.field-glow{opacity:1;}
+.field-glow{position:absolute;bottom:0;left:10%;right:10%;height:1px;background:var(--accent);opacity:0;transition:opacity 0.3s;filter:blur(3px);}
+
+/* Strength meter */
+.strength-wrap{margin-top:8px;display:none;}
+.strength-wrap.show{display:block;}
+.strength-bars{display:flex;gap:4px;margin-bottom:4px;}
+.strength-bar{flex:1;height:3px;border-radius:1px;background:var(--border);transition:background 0.3s;}
+.strength-bar.active.weak{background:var(--danger);}
+.strength-bar.active.medium{background:var(--warning);}
+.strength-bar.active.strong{background:var(--accent2);}
+.strength-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;}
+
+/* Submit btn */
+.submit-btn{width:100%;padding:15px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;cursor:none;border-radius:3px;transition:all 0.3s;position:relative;overflow:hidden;margin-top:8px;}
+.submit-btn::before{content:'';position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;}
+.submit-btn:hover::before{transform:scaleX(1);}
+.submit-btn span{position:relative;z-index:1;transition:color 0.3s;}
+.submit-btn:hover span{color:#000;}
+.submit-btn.loading{opacity:0.6;pointer-events:none;}
+
+/* Alert */
+.alert{padding:10px 14px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;margin-bottom:16px;display:none;letter-spacing:1px;}
+.alert.error{background:rgba(255,60,90,0.08);border:1px solid rgba(255,60,90,0.3);color:var(--danger);display:block;}
+.alert.success{background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.25);color:var(--accent2);display:block;}
+
+/* Key generation animation */
+.keygen-wrap{margin-top:20px;padding:14px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:3px;display:none;}
+.keygen-wrap.show{display:block;}
+.keygen-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;}
+.keygen-bar{height:3px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:6px;}
+.keygen-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width 0.1s;border-radius:1px;}
+.keygen-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px;}
+
+/* Info row */
+.info-row{display:flex;align-items:center;gap:8px;margin-top:20px;padding:10px 14px;background:rgba(0,212,255,0.03);border:1px solid rgba(0,212,255,0.08);border-radius:3px;}
+.info-row-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;line-height:1.6;}
+
+/* Landing link */
+.landing-link{margin-top:24px;text-align:center;}
+.landing-link a{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-decoration:none;transition:color 0.2s;cursor:none;}
+.landing-link a:hover{color:var(--accent);}
+
+/* Particles */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.particle{position:absolute;border-radius:50%;animation:pfloat linear infinite;opacity:0;}
+@keyframes pfloat{0%{transform:translateY(100vh);opacity:0}10%{opacity:0.5}90%{opacity:0.5}100%{transform:translateY(-50px);opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="particles" id="particles"></div>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="lock-wrapper">
+    <div class="lock-rings">
+      <div class="ring ring1"><div class="ring-dot"></div></div>
+      <div class="ring ring2"><div class="ring-dot ring2-dot"></div></div>
+      <div class="ring ring3"></div>
+    </div>
+    <svg class="lock-svg" width="100" height="100" viewBox="0 0 100 100" fill="none">
+      <rect x="15" y="44" width="70" height="46" rx="6" stroke="#00d4ff" stroke-width="2.5"/>
+      <path d="M28 44V32C28 19.85 37.85 10 50 10C62.15 10 72 19.85 72 32V44" stroke="#00d4ff" stroke-width="2.5"/>
+      <circle cx="50" cy="67" r="8" fill="none" stroke="#00d4ff" stroke-width="2"/>
+      <circle cx="50" cy="67" r="3" fill="#00d4ff"/>
+      <line x1="50" y1="75" x2="50" y2="82" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="15" cy="10" r="2" fill="#00ff9d" opacity="0.6"/>
+      <circle cx="85" cy="10" r="2" fill="#00ff9d" opacity="0.6"/>
+      <circle cx="15" cy="90" r="2" fill="#00ff9d" opacity="0.6"/>
+      <circle cx="85" cy="90" r="2" fill="#00ff9d" opacity="0.6"/>
+    </svg>
+  </div>
+
+  <h1 class="left-title">SECURE<br><span>COMMUNICATION</span></h1>
+  <p class="left-sub">MILITARY-GRADE ENCRYPTION FOR EVERYONE</p>
+
+  <div class="badges">
+    <div class="badge"><span class="badge-dot"></span>AES-256-CFB</div>
+    <div class="badge"><span class="badge-dot" style="background:var(--warning)"></span>RSA-2048</div>
+    <div class="badge"><span class="badge-dot" style="background:var(--accent)"></span>E2E ENCRYPTED</div>
+    <div class="badge"><span class="badge-dot" style="background:var(--danger)"></span>ZERO KNOWLEDGE</div>
+    <div class="badge"><span class="badge-dot"></span>bcrypt HASHING</div>
+    <div class="badge"><span class="badge-dot" style="background:var(--warning)"></span>SHA-256</div>
+  </div>
+
+  <div class="terminal">
+    <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">securechat --status</span></div>
+    <div class="t-line"><span class="t-out">✓ AES-256 encryption: ACTIVE</span></div>
+    <div class="t-line"><span class="t-out">✓ RSA-2048 keys: GENERATED</span></div>
+    <div class="t-line"><span class="t-out">✓ E2E encryption: ENABLED</span></div>
+    <div class="t-line"><span class="t-out">✓ Server knowledge: ZERO</span></div>
+    <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd" id="typingCmd"></span><span style="color:var(--accent);animation:blink 1s infinite">▋</span></div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="4" y="12" width="20" height="14" rx="2" stroke="#00d4ff" stroke-width="1.5"/>
+        <path d="M8 12V9C8 5.686 10.686 3 14 3C17.314 3 20 5.686 20 9V12" stroke="#00d4ff" stroke-width="1.5"/>
+        <circle cx="14" cy="19" r="2.5" fill="#00d4ff"/>
+      </svg>
+    </div>
+    <span class="brand-name">SECURECHAT</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('login')">LOGIN</button>
+    <button class="tab" onclick="switchTab('register')">REGISTER</button>
+  </div>
+
+  <div class="form-wrap">
+    <div id="alert" class="alert"></div>
+
+    <!-- LOGIN -->
+    <div id="loginPanel" class="form-panel active">
+      <div class="field">
+        <div class="field-label">USERNAME</div>
+        <div class="field-wrap">
+          <span class="field-icon">👤</span>
+          <input type="text" id="loginUser" placeholder="Enter your username"/>
+          <div class="field-glow"></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">
+          <span>PASSWORD</span>
+        </div>
+        <div class="field-wrap">
+          <span class="field-icon">🔑</span>
+          <input type="password" id="loginPass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <div class="field-glow"></div>
+        </div>
+      </div>
+      <button class="submit-btn" id="loginBtn" onclick="doLogin()"><span>AUTHENTICATE →</span></button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPanel" class="form-panel">
+      <div class="field">
+        <div class="field-label">USERNAME</div>
+        <div class="field-wrap">
+          <span class="field-icon">👤</span>
+          <input type="text" id="regUser" placeholder="Choose a username"/>
+          <div class="field-glow"></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">PASSWORD</div>
+        <div class="field-wrap">
+          <span class="field-icon">🔑</span>
+          <input type="password" id="regPass" placeholder="Create strong password" oninput="checkStrength(this.value)" onkeydown="if(event.key==='Enter')doRegister()"/>
+          <div class="field-glow"></div>
+        </div>
+        <div class="strength-wrap" id="strengthWrap">
+          <div class="strength-bars">
+            <div class="strength-bar" id="sb1"></div>
+            <div class="strength-bar" id="sb2"></div>
+            <div class="strength-bar" id="sb3"></div>
+            <div class="strength-bar" id="sb4"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel" style="color:var(--muted)">PASSWORD STRENGTH</div>
+        </div>
+      </div>
+
+      <!-- Key gen animation -->
+      <div class="keygen-wrap" id="keygenWrap">
+        <div class="keygen-title">⚙ GENERATING RSA-2048 KEY PAIR...</div>
+        <div class="keygen-bar"><div class="keygen-fill" id="keygenFill"></div></div>
+        <div class="keygen-text" id="keygenText">Initializing...</div>
+      </div>
+
+      <button class="submit-btn" id="regBtn" onclick="doRegister()"><span>CREATE ACCOUNT →</span></button>
+    </div>
+
+    <div class="info-row">
+      <span style="font-size:16px">🔐</span>
+      <div class="info-row-text">RSA-2048 KEY PAIR AUTO-GENERATED ON REGISTER<br>YOUR PRIVATE KEY IS NEVER TRANSMITTED</div>
+    </div>
+
+    <div class="landing-link">
+      <a href="/landing">← VIEW LANDING PAGE</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Cursor
+const cur=document.getElementById('cursor');
+const dot=document.getElementById('cursorDot');
+document.addEventListener('mousemove',e=>{
+  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
+  dot.style.left=e.clientX+'px';dot.style.top=e.clientY+'px';
+});
+
+// Particles
+const pc=document.getElementById('particles');
+for(let i=0;i<20;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.style.left=Math.random()*100+'%';
+  p.style.width=p.style.height=(Math.random()>0.7?3:2)+'px';
+  p.style.background=Math.random()>0.5?'#00d4ff':'#00ff9d';
+  p.style.animationDuration=(10+Math.random()*15)+'s';
+  p.style.animationDelay=(Math.random()*8)+'s';
+  pc.appendChild(p);
+}
+
+// Typing animation
+const cmds=['connect --secure','encrypt --aes256','verify --rsa2048'];
+let ci=0,ch=0;
+const typingEl=document.getElementById('typingCmd');
+function typeCmd(){
+  if(ch<cmds[ci].length){typingEl.textContent=cmds[ci].slice(0,++ch);setTimeout(typeCmd,80);}
+  else{setTimeout(()=>{ch=0;ci=(ci+1)%cmds.length;typingEl.textContent='';typeCmd();},2000);}
+}
+typeCmd();
+
+// Tabs
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='login'&&i===0)||(t==='register'&&i===1)));
+  document.getElementById('loginPanel').classList.toggle('active',t==='login');
+  document.getElementById('registerPanel').classList.toggle('active',t==='register');
+  clearAlert();
+}
+
+function showAlert(msg,type){const el=document.getElementById('alert');el.textContent=msg;el.className='alert '+type;}
+function clearAlert(){const el=document.getElementById('alert');el.className='alert';}
+
+// Password strength
+function checkStrength(val){
+  const w=document.getElementById('strengthWrap');
+  if(!val){w.classList.remove('show');return;}
+  w.classList.add('show');
+  let score=0;
+  if(val.length>=6)score++;
+  if(val.length>=10)score++;
+  if(/[A-Z]/.test(val)&&/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+  const labels=['WEAK','MEDIUM','STRONG','VERY STRONG'];
+  const colors=['var(--danger)','var(--warning)','var(--accent2)','var(--accent2)'];
+  const cls=['weak','medium','strong','strong'];
+  for(let i=1;i<=4;i++){
+    const b=document.getElementById('sb'+i);
+    b.className='strength-bar'+(i<=score?' active '+cls[score-1]:'');
+  }
+  const sl=document.getElementById('strengthLabel');
+  sl.textContent=labels[score-1]||'TOO SHORT';
+  sl.style.color=colors[score-1]||'var(--muted)';
+}
+
+// Key gen animation
+function animateKeygen(cb){
+  const wrap=document.getElementById('keygenWrap');
+  const fill=document.getElementById('keygenFill');
+  const text=document.getElementById('keygenText');
+  wrap.classList.add('show');
+  const steps=[
+    [10,'Generating prime numbers...'],
+    [30,'Computing RSA key pair...'],
+    [55,'Applying OAEP padding...'],
+    [75,'Validating key integrity...'],
+    [90,'Securing private key...'],
+    [100,'RSA-2048 keys ready! ✓']
+  ];
+  let i=0;
+  const run=()=>{
+    if(i>=steps.length){setTimeout(cb,300);return;}
+    fill.style.width=steps[i][0]+'%';
+    text.textContent=steps[i][1];
+    i++;setTimeout(run,300);
+  };
+  run();
+}
+
+async function doLogin(){
+  const username=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  if(!username||!password)return showAlert('⚠ Please enter username and password','error');
+  const btn=document.getElementById('loginBtn');
+  btn.classList.add('loading');
+  btn.querySelector('span').textContent='AUTHENTICATING...';
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await res.json();
+    if(data.success){showAlert('✓ Authentication successful!','success');setTimeout(()=>window.location.href='/chat',800);}
+    else{showAlert('⚠ '+data.message,'error');btn.classList.remove('loading');btn.querySelector('span').textContent='AUTHENTICATE →';}
+  }catch(e){showAlert('⚠ Connection failed!','error');btn.classList.remove('loading');btn.querySelector('span').textContent='AUTHENTICATE →';}
+}
+
+async function doRegister(){
+  const username=document.getElementById('regUser').value.trim();
+  const password=document.getElementById('regPass').value;
+  if(!username||!password)return showAlert('⚠ Please fill all fields','error');
+  if(password.length<6)return showAlert('⚠ Password must be 6+ characters','error');
+  const btn=document.getElementById('regBtn');
+  btn.classList.add('loading');
+  btn.querySelector('span').textContent='GENERATING KEYS...';
+  animateKeygen(async()=>{
+    try{
+      const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+      const data=await res.json();
+      if(data.success){showAlert('✓ Account created! RSA keys generated!','success');setTimeout(()=>window.location.href='/chat',800);}
+      else{showAlert('⚠ '+data.message,'error');btn.classList.remove('loading');btn.querySelector('span').textContent='CREATE ACCOUNT →';}
+    }catch(e){showAlert('⚠ Connection failed!','error');btn.classList.remove('loading');btn.querySelector('span').textContent='CREATE ACCOUNT →';}
+  });
+}
+</script>
+</body>
+</html>

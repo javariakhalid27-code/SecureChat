@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SecureChat - AI Threat Detection</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#020c10;--surface:#061218;--surface2:#0a1e28;--border:#0d3040;--accent:#00d4ff;--accent2:#00ff9d;--danger:#ff3c5a;--warning:#ffb700;--purple:#a855f7;--text:#e0f0f8;--muted:#2a5060;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--border);}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,90,0.4)}70%{box-shadow:0 0 0 8px rgba(255,60,90,0)}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 25px currentColor,0 0 50px currentColor}}
+
+nav{position:sticky;top:0;z-index:100;padding:12px 28px;background:rgba(2,12,16,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;gap:14px;}
+.nav-back{padding:6px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);border-radius:6px;color:var(--accent);font-size:12px;text-decoration:none;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.nav-back:hover{background:rgba(0,212,255,0.12);}
+.nav-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;color:var(--danger);letter-spacing:3px;animation:glow 3s ease-in-out infinite;}
+.nav-status{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:2px;}
+.status-dot{width:7px;height:7px;background:var(--accent2);border-radius:50%;animation:blink 1s infinite;}
+.nav-time{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);}
+
+.alert-banner{padding:10px 28px;background:linear-gradient(90deg,rgba(255,60,90,0.15),rgba(255,60,90,0.05));border-bottom:1px solid rgba(255,60,90,0.3);display:none;align-items:center;gap:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--danger);}
+.alert-icon{font-size:16px;animation:pulse 1.5s infinite;}
+.alert-badge{padding:2px 10px;background:rgba(255,60,90,0.2);border:1px solid rgba(255,60,90,0.4);border-radius:3px;font-size:9px;letter-spacing:2px;}
+
+.page{padding:20px 28px;position:relative;z-index:1;}
+
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;position:relative;overflow:hidden;animation:fadeIn 0.4s ease both;transition:all 0.2s;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc-danger::before{background:linear-gradient(90deg,transparent,var(--danger),transparent);}
+.sc-warning::before{background:linear-gradient(90deg,transparent,var(--warning),transparent);}
+.sc-accent::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.sc-green::before{background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.sc-purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.stat-icon{font-size:22px;margin-bottom:10px;}
+.stat-n{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;margin-bottom:4px;line-height:1;}
+.stat-l{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;}
+.stat-change{font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:6px;}
+
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.full-width{grid-column:span 2;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;animation:fadeIn 0.5s ease both;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.card-badge{padding:2px 8px;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;}
+.badge-live{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);color:var(--accent2);}
+.badge-ai{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:var(--purple);}
+.card-body{padding:16px;}
+
+.threat-feed{max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.threat-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:4px;border:1px solid;animation:fadeIn 0.3s ease;transition:all 0.2s;}
+.threat-item:hover{transform:translateX(3px);}
+.threat-item.critical{background:rgba(255,60,90,0.06);border-color:rgba(255,60,90,0.2);}
+.threat-item.high{background:rgba(255,107,53,0.06);border-color:rgba(255,107,53,0.2);}
+.threat-item.medium{background:rgba(255,183,0,0.05);border-color:rgba(255,183,0,0.15);}
+.threat-item.low{background:rgba(88,166,255,0.04);border-color:rgba(88,166,255,0.12);}
+.threat-item.safe{background:rgba(63,185,80,0.04);border-color:rgba(63,185,80,0.12);}
+.t-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.t-dot.critical{background:var(--danger);animation:pulse 1s infinite;}
+.t-dot.high{background:#ff6b35;}
+.t-dot.medium{background:var(--warning);}
+.t-dot.low{background:var(--accent);}
+.t-dot.safe{background:var(--accent2);}
+.t-info{flex:1;min-width:0;}
+.t-type{font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.t-detail{font-size:11px;color:var(--muted);line-height:1.4;}
+.t-time{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);flex-shrink:0;}
+.t-score{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;flex-shrink:0;}
+
+.ai-status{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.15);border-radius:4px;margin-bottom:12px;}
+.ai-icon{font-size:28px;}
+.ai-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--purple);letter-spacing:2px;}
+.ai-desc{font-size:11px;color:var(--muted);margin-top:3px;}
+.ai-badge{padding:3px 10px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--purple);}
+.detection-list{display:flex;flex-direction:column;gap:6px;}
+.detection-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;}
+.det-icon{font-size:16px;flex-shrink:0;}
+.det-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);flex:1;letter-spacing:1px;}
+.det-on{padding:2px 8px;background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.2);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--accent2);}
+
+.meter-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;display:flex;justify-content:space-between;}
+.meter-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.meter-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.threat-levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.level-item{text-align:center;padding:8px;border-radius:4px;border:1px solid var(--border);}
+.level-n{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;}
+.level-l{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+
+.top-threat-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(13,48,64,0.5);}
+.top-threat-item:last-child{border-bottom:none;}
+.tt-bar-wrap{flex:1;}
+.tt-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text);margin-bottom:4px;}
+.tt-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.tt-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--danger),var(--warning));transition:width 1s ease;}
+.tt-count{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--danger);flex-shrink:0;}
+
+.test-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.test-btn{padding:14px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;text-align:center;transition:all 0.2s;}
+.test-btn:hover{border-color:var(--accent);color:var(--accent);}
+.test-btn.red:hover{border-color:var(--danger);color:var(--danger);}
+.test-btn .sub{font-size:8px;opacity:0.5;margin-top:4px;display:block;}
+
+.threat-notif{position:fixed;top:80px;right:20px;padding:14px 18px;background:var(--surface);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);animation:slideIn 0.3s ease;z-index:2000;max-width:340px;border-left:3px solid;display:flex;gap:10px;align-items:flex-start;}
+.tn-title{font-weight:700;font-size:13px;margin-bottom:3px;}
+.tn-text{font-size:12px;color:var(--muted);}
+.tn-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/chat" class="nav-back">← BACK</a>
+  <a href="/dashboard" class="nav-back">📊 DASHBOARD</a>
+  <div class="nav-title">🤖 AI THREAT DETECTION</div>
+  <div class="nav-status"><div class="status-dot"></div>AI ENGINE ACTIVE</div>
+  <div class="nav-time" id="navTime">--:--:--</div>
+</nav>
+
+<div class="alert-banner" id="alertBanner">
+  <span class="alert-icon">🚨</span>
+  <span id="alertText">Threat detected!</span>
+  <span class="alert-badge" id="alertBadge">HIGH</span>
+</div>
+
+<div class="page">
+  <div class="stats-row">
+    <div class="stat-card sc-danger">
+      <div class="stat-icon">🚨</div>
+      <div class="stat-n" id="sCritical" style="color:var(--danger)">0</div>
+      <div class="stat-l">CRITICAL THREATS</div>
+      <div class="stat-change" style="color:var(--danger)">REAL-TIME</div>
+    </div>
+    <div class="stat-card sc-warning">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-n" id="sHigh" style="color:var(--warning)">0</div>
+      <div class="stat-l">HIGH THREATS</div>
+      <div class="stat-change" style="color:var(--warning)">MONITORED</div>
+    </div>
+    <div class="stat-card sc-accent">
+      <div class="stat-icon">📊</div>
+      <div class="stat-n" id="sTotal" style="color:var(--accent)">0</div>
+      <div class="stat-l">TOTAL EVENTS</div>
+      <div class="stat-change" style="color:var(--accent)">LOGGED</div>
+    </div>
+    <div class="stat-card sc-green">
+      <div class="stat-icon">🛡️</div>
+      <div class="stat-n" id="sBlocked" style="color:var(--accent2)">0</div>
+      <div class="stat-l">THREATS BLOCKED</div>
+      <div class="stat-change" style="color:var(--accent2)">PROTECTED</div>
+    </div>
+    <div class="stat-card sc-purple">
+      <div class="stat-icon">🤖</div>
+      <div class="stat-n" style="color:var(--purple)">AI</div>
+      <div class="stat-l">ENGINE STATUS</div>
+      <div class="stat-change" style="color:var(--purple)">ONLINE</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--danger)">🚨 LIVE THREAT FEED</div>
+        <span class="card-badge badge-live">LIVE</span>
+      </div>
+      <div class="card-body" style="padding:10px;">
+        <div class="threat-feed" id="threatFeed">
+          <div style="padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">AI Engine monitoring... No threats detected yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--purple)">🤖 AI DETECTION MODULES</div>
+        <span class="card-badge badge-ai">AI POWERED</span>
+      </div>
+      <div class="card-body">
+        <div class="ai-status">
+          <div class="ai-icon">🧠</div>
+          <div style="flex:1;">
+            <div class="ai-title">NEURAL THREAT ENGINE</div>
+            <div class="ai-desc">Pattern recognition + behavioral analysis active</div>
+          </div>
+          <div class="ai-badge">ONLINE</div>
+        </div>
+        <div class="detection-list">
+          <div class="detection-item"><span class="det-icon">💉</span><span class="det-name">SQL INJECTION DETECTOR</span><span class="det-on">ACTIVE</span></div>
+          <div class="detection-item"><span class="det-icon">📜</span><span class="det-name">XSS ATTACK DETECTOR</span><span class="det-on">ACTIVE</span></div>
+          <div class="detection-item"><span class="det-icon">🔨</span><span class="det-name">BRUTE FORCE DETECTOR</span><span class="det-on">ACTIVE</span></div>
+          <div class="detection-item"><span class="det-icon">📨</span><span class="det-name">SPAM MESSAGE FILTER</span><span class="det-on">ACTIVE</span></div>
+          <div class="detection-item"><span class="det-icon">🌊</span><span class="det-name">MESSAGE FLOOD DETECTOR</span><span class="det-on">ACTIVE</span></div>
+          <div class="detection-item"><span class="det-icon">🔍</span><span class="det-name">ANOMALY DETECTOR</span><span class="det-on">ACTIVE</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--warning)">📊 THREAT LEVEL METER</div>
+        <span class="card-badge badge-live">REAL-TIME</span>
+      </div>
+      <div class="card-body">
+        <div class="meter-label"><span>SYSTEM THREAT LEVEL</span><span id="meterPct">0%</span></div>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill" style="width:0%;background:var(--accent2);"></div>
+        </div>
+        <div class="threat-levels">
+          <div class="level-item"><div class="level-n" style="color:var(--accent2)" id="lvlSafe">0</div><div class="level-l">SAFE</div></div>
+          <div class="level-item"><div class="level-n" style="color:var(--accent)" id="lvlLow">0</div><div class="level-l">LOW</div></div>
+          <div class="level-item"><div class="level-n" style="color:var(--warning)" id="lvlMed">0</div><div class="level-l">MEDIUM</div></div>
+          <div class="level-item"><div class="level-n" style="color:#ff6b35" id="lvlHigh">0</div><div class="level-l">HIGH</div></div>
+          <div class="level-item"><div class="level-n" style="color:var(--danger)" id="lvlCrit">0</div><div class="level-l">CRITICAL</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--accent)">🎯 TOP ATTACK TYPES</div>
+        <span class="card-badge badge-ai">IDS</span>
+      </div>
+      <div class="card-body">
+        <div id="topThreats">
+          <div style="text-align:center;padding:20px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">No attack data yet</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card full-width">
+      <div class="card-header">
+        <div class="card-title" style="color:var(--accent)">🧪 SIMULATE ATTACKS — DEMO MODE</div>
+        <span class="card-badge badge-ai">TESTING</span>
+      </div>
+      <div class="card-body">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:12px;">CLICK TO SIMULATE REAL ATTACK SCENARIOS — AI WILL DETECT AND RESPOND</div>
+        <div class="test-panel">
+          <div class="test-btn red" onclick="simulateThreat('sql')">💉 SQL INJECTION<span class="sub">SELECT * FROM users--</span></div>
+          <div class="test-btn red" onclick="simulateThreat('xss')">📜 XSS ATTACK<span class="sub">script alert onerror</span></div>
+          <div class="test-btn red" onclick="simulateThreat('bruteforce')">🔨 BRUTE FORCE<span class="sub">15 failed attempts</span></div>
+          <div class="test-btn red" onclick="simulateThreat('flood')">🌊 MSG FLOODING<span class="sub">25 msgs per minute</span></div>
+          <div class="test-btn red" onclick="simulateThreat('spam')">📨 SPAM ATTACK<span class="sub">buy now free money</span></div>
+          <div class="test-btn" onclick="simulateThreat('normal')">✅ NORMAL USAGE<span class="sub">clean safe message</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var allThreats = [];
+var fakeThreats = {
+  sql: {level:'CRITICAL', threat_type:'SQL_INJECTION_ATTEMPT', detail:'SQL keywords detected: select, union, from', score:90, username:'TestUser', color:'#ff3c5a', blocked:true},
+  xss: {level:'HIGH', threat_type:'XSS_ATTEMPT', detail:'XSS pattern detected: script, onerror=, alert()', score:75, username:'TestUser', color:'#ff6b35', blocked:true},
+  bruteforce: {level:'CRITICAL', threat_type:'BRUTE_FORCE_ATTACK', detail:'15 failed login attempts from same IP in 5 minutes', score:90, username:'admin', color:'#ff3c5a', blocked:true},
+  flood: {level:'HIGH', threat_type:'MESSAGE_FLOODING', detail:'25 messages sent in last 60 seconds', score:80, username:'FloodUser', color:'#ff6b35', blocked:true},
+  spam: {level:'MEDIUM', threat_type:'SPAM_DETECTED', detail:'Spam keywords: buy now, free money, click here', score:40, username:'SpamUser', color:'#ffb700', blocked:false},
+  normal: {level:'SAFE', threat_type:'NORMAL_ACTIVITY', detail:'No threats detected - message is clean and safe', score:0, username:'SafeUser', color:'#3fb950', blocked:false}
+};
+
+function updateClock() {
+  document.getElementById('navTime').textContent = new Date().toLocaleTimeString('en-US', {hour12:false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function getTimeNow() {
+  return new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false});
+}
+
+function renderFeed(threats) {
+  var feed = document.getElementById('threatFeed');
+  if (!threats.length) {
+    feed.innerHTML = '<div style="padding:20px;text-align:center;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">AI Engine monitoring... No threats detected.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < threats.length && i < 15; i++) {
+    var t = threats[i];
+    var level = (t.level || 'safe').toLowerCase();
+    var blocked = t.blocked ? '<span style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--danger)">BLOCKED</span>' : '';
+    html += '<div class="threat-item ' + level + '">';
+    html += '<div class="t-dot ' + level + '"></div>';
+    html += '<div class="t-info">';
+    html += '<div class="t-type" style="color:' + (t.color||'var(--accent)') + '">' + t.threat_type + '</div>';
+    html += '<div class="t-detail">' + t.detail + '</div>';
+    html += '<div style="display:flex;gap:6px;margin-top:4px;">';
+    html += '<span style="padding:1px 6px;border-radius:2px;font-family:Share Tech Mono,monospace;font-size:8px;background:rgba(255,60,90,0.08);color:' + (t.color||'var(--accent)') + ';border:1px solid ' + (t.color||'var(--accent)') + '33">' + t.level + '</span>';
+    html += '<span style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--muted)">User: ' + t.username + '</span>';
+    html += blocked;
+    html += '</div></div>';
+    html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">';
+    html += '<div class="t-score" style="color:' + (t.color||'var(--accent)') + '">' + t.score + '</div>';
+    html += '<div class="t-time">' + (t.time || getTimeNow()) + '</div>';
+    html += '</div></div>';
+  }
+  feed.innerHTML = html;
+}
+
+function updateStats() {
+  var total = allThreats.length;
+  var critical = 0, high = 0, medium = 0, low = 0, safe = 0, blocked = 0;
+  var typeCounts = {};
+
+  for (var i = 0; i < allThreats.length; i++) {
+    var t = allThreats[i];
+    var lvl = t.level || 'SAFE';
+    if (lvl === 'CRITICAL') critical++;
+    else if (lvl === 'HIGH') high++;
+    else if (lvl === 'MEDIUM') medium++;
+    else if (lvl === 'LOW') low++;
+    else safe++;
+    if (t.blocked) blocked++;
+    typeCounts[t.threat_type] = (typeCounts[t.threat_type] || 0) + 1;
+  }
+
+  document.getElementById('sCritical').textContent = critical;
+  document.getElementById('sHigh').textContent = high;
+  document.getElementById('sTotal').textContent = total;
+  document.getElementById('sBlocked').textContent = blocked;
+  document.getElementById('lvlCrit').textContent = critical;
+  document.getElementById('lvlHigh').textContent = high;
+  document.getElementById('lvlMed').textContent = medium;
+  document.getElementById('lvlLow').textContent = low;
+  document.getElementById('lvlSafe').textContent = safe;
+
+  var pct = total > 0 ? Math.min(100, Math.round((critical * 3 + high * 2 + medium) / (total + 1) * 15)) : 0;
+  document.getElementById('meterPct').textContent = pct + '%';
+  var fill = document.getElementById('meterFill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct > 60 ? 'var(--danger)' : pct > 30 ? 'var(--warning)' : 'var(--accent2)';
+
+  // Alert banner
+  var banner = document.getElementById('alertBanner');
+  if (critical > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('alertText').textContent = critical + ' CRITICAL threat(s) detected!';
+    document.getElementById('alertBadge').textContent = 'CRITICAL';
+  } else if (high > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('alertText').textContent = high + ' HIGH threat(s) detected!';
+    document.getElementById('alertBadge').textContent = 'HIGH';
+  }
+
+  // Top threats
+  var sorted = Object.entries(typeCounts).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  var topDiv = document.getElementById('topThreats');
+  if (!sorted.length) {
+    topDiv.innerHTML = '<div style="text-align:center;padding:20px;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">No attack data yet</div>';
+    return;
+  }
+  var maxCount = sorted[0][1];
+  var topHtml = '';
+  for (var j = 0; j < sorted.length; j++) {
+    var pctBar = Math.round(sorted[j][1] / maxCount * 100);
+    topHtml += '<div class="top-threat-item">';
+    topHtml += '<div class="tt-bar-wrap"><div class="tt-name">' + sorted[j][0] + '</div>';
+    topHtml += '<div class="tt-bar"><div class="tt-fill" style="width:' + pctBar + '%"></div></div></div>';
+    topHtml += '<div class="tt-count">' + sorted[j][1] + '</div></div>';
+  }
+  topDiv.innerHTML = topHtml;
+}
+
+function simulateThreat(type) {
+  var t = fakeThreats[type];
+  if (!t) return;
+  var newThreat = {
+    level: t.level,
+    threat_type: t.threat_type,
+    detail: t.detail,
+    score: t.score,
+    username: t.username,
+    color: t.color,
+    blocked: t.blocked,
+    time: getTimeNow()
+  };
+  allThreats.unshift(newThreat);
+  renderFeed(allThreats);
+  updateStats();
+  if (t.level !== 'SAFE') {
+    showThreatNotif(t);
+  }
+}
+
+function showThreatNotif(t) {
+  var icons = {CRITICAL:'🚨', HIGH:'⚠️', MEDIUM:'🔶', LOW:'ℹ️', SAFE:'✅'};
+  var n = document.createElement('div');
+  n.className = 'threat-notif';
+  n.style.borderColor = t.color || 'var(--danger)';
+  n.innerHTML = '<div style="font-size:18px;flex-shrink:0;">' + (icons[t.level] || '⚠️') + '</div>' +
+    '<div><div class="tn-title" style="color:' + (t.color||'var(--danger)') + '">' + t.threat_type + '</div>' +
+    '<div class="tn-text">' + t.detail + '</div>' +
+    '<div class="tn-time">Score: ' + t.score + ' · ' + t.level + ' · ' + getTimeNow() + '</div></div>';
+  document.body.appendChild(n);
+  setTimeout(function() {
+    n.style.opacity = '0';
+    n.style.transform = 'translateX(20px)';
+    n.style.transition = 'all 0.4s';
+  }, 4000);
+  setTimeout(function() { n.remove(); }, 4500);
+}
+
+async function loadThreats() {
+  try {
+    var res = await fetch('/api/threats');
+    var d = await res.json();
+    if (d.success && d.threats && d.threats.length) {
+      allThreats = d.threats;
+      renderFeed(allThreats);
+      updateStats();
+    }
+  } catch(e) {}
+}
+
+loadThreats();
+setInterval(loadThreats, 8000);
+</script>
+</body>
+</html>
